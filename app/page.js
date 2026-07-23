@@ -298,6 +298,39 @@ const LAW_INDEX = {
       lastChecked: '2026-07-23',
     },
   ],
+  '산업안전보건법 시행규칙': [
+    {
+      no: '별표4', title: '안전보건교육 교육과정별 교육시간 (제26조제1항 등 관련)',
+      text: `1. 근로자 안전보건교육
+정기교육
+ · 사무직 종사 근로자 — 매반기 6시간 이상
+ · 판매업무에 직접 종사하는 근로자 — 매반기 6시간 이상
+ · 판매업무 외 그 밖의 근로자 — 매반기 12시간 이상
+
+채용 시 교육
+ · 일용근로자 및 근로계약기간 1주 이하 기간제근로자 — 1시간 이상
+ · 근로계약기간 1주 초과 1개월 이하 기간제근로자 — 4시간 이상
+ · 그 밖의 근로자 — 8시간 이상
+
+작업내용 변경 시 교육
+ · 일용근로자 및 근로계약기간 1주 이하 기간제근로자 — 1시간 이상
+ · 그 밖의 근로자 — 2시간 이상
+
+특별교육 (별표5 제1호라목에 해당하는 유해·위험작업 종사자)
+ · 일용근로자 및 근로계약기간 1주 이하 기간제근로자 — 2시간 이상
+ · 타워크레인 신호작업 종사 일용근로자 — 8시간 이상
+ · 그 밖의 근로자 — 16시간 이상 (최초 작업 종사 전 4시간 이상 실시, 나머지 12시간은 3개월 이내 분할 실시 가능), 단기간·간헐적 작업인 경우 2시간 이상
+
+2. 관리감독자 안전보건교육 (2025.5.30 개정, 근로자 교육과 별도 항목으로 분리됨)
+ · 정기교육 — 연간 16시간 이상
+ · 채용 시 교육 — 8시간 이상
+ · 작업내용 변경 시 교육 — 2시간 이상
+ · 특별교육 — 16시간 이상 (최초 작업 전 4시간 이상, 나머지 12시간은 3개월 이내 분할 가능), 단기간·간헐적 작업은 2시간 이상
+
+※ 구체적인 교육 "내용"(정기교육·특별교육에 각각 어떤 주제를 다뤄야 하는지)은 별표5에 40개 항목 넘게 나열되어 있어 이 앱에는 담지 않았어요. law.go.kr 링크에서 별표5를 확인해주세요.`,
+      lastChecked: '2026-07-23',
+    },
+  ],
 };
 
 function lawSearchUrl(lawName, articleNo) {
@@ -337,6 +370,33 @@ function cycleLabel(period) {
   return map[period] || key;
 }
 
+function isLeapYear(y) {
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+}
+
+function weeksInYear(year) {
+  const key = getCycleKey('weekly', new Date(year, 11, 31));
+  return parseInt(key.split('W')[1], 10) || 52;
+}
+
+function totalCyclesInYear(period, year) {
+  if (period === 'daily') return isLeapYear(year) ? 366 : 365;
+  if (period === 'weekly') return weeksInYear(year);
+  if (period === 'monthly') return 12;
+  if (period === 'quarterly') return 4;
+  if (period === 'semiannual') return 2;
+  if (period === 'annual') return 1;
+  return 1;
+}
+
+function completedCyclesInYear(doneSet, year) {
+  if (!doneSet) return 0;
+  const prefix = String(year);
+  let count = 0;
+  doneSet.forEach(k => { if (k.startsWith(prefix)) count++; });
+  return count;
+}
+
 export default function Dashboard() {
   const supabase = createClient();
   const router = useRouter();
@@ -345,7 +405,8 @@ export default function Dashboard() {
   const [items, setItems] = useState([]);
   const [doneMap, setDoneMap] = useState({}); // itemId -> Set of cycleKeys done
   const [active, setActive] = useState('daily');
-  const [view, setView] = useState('checklist'); // 'checklist' | 'lawsearch'
+  const [view, setView] = useState('checklist'); // 'checklist' | 'lawsearch' | 'yearly'
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [expandedArticle, setExpandedArticle] = useState(null); // "lawName|articleNo"
   const [newItemText, setNewItemText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -447,6 +508,13 @@ export default function Dashboard() {
   const total = periodItems.length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
 
+  const thisYear = new Date().getFullYear();
+  const yearsFromData = new Set([thisYear]);
+  Object.values(doneMap).forEach(set => {
+    set.forEach(k => { const y = parseInt(k.slice(0, 4), 10); if (!isNaN(y)) yearsFromData.add(y); });
+  });
+  const availableYears = Array.from(yearsFromData).sort((a, b) => b - a);
+
   return (
     <div className="wrap">
       <div className="topbar">
@@ -472,6 +540,9 @@ export default function Dashboard() {
       <div className="tabs" style={{marginBottom:8}}>
         <div className={"tab" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
           체크리스트
+        </div>
+        <div className={"tab" + (view === 'yearly' ? " active" : "")} onClick={() => setView('yearly')}>
+          연도별 기록
         </div>
         <div className={"tab" + (view === 'lawsearch' ? " active" : "")} onClick={() => setView('lawsearch')}>
           법령검색
@@ -536,6 +607,56 @@ export default function Dashboard() {
             </div>
           </div>
         </>
+      )}
+
+      {view === 'yearly' && (
+        <div className="panel">
+          <div className="panel-head">
+            <h2>연도별 완료 기록</h2>
+            <div className="cycle-label">체크 기록은 연도가 지나도 사라지지 않아요 — 연도를 선택해서 지난 기록을 볼 수 있어요</div>
+          </div>
+
+          <div className="tabs" style={{marginTop:10, marginBottom:6}}>
+            {availableYears.map(y => (
+              <div key={y} className={"tab" + (selectedYear === y ? " active" : "")} onClick={() => setSelectedYear(y)}>
+                {y}년{y === thisYear ? ' (현재)' : ''}
+              </div>
+            ))}
+          </div>
+
+          {PERIODS.map(p => {
+            const pItems = items.filter(i => i.period === p.key);
+            if (pItems.length === 0) return null;
+            const yearTotal = totalCyclesInYear(p.key, selectedYear);
+            return (
+              <div key={p.key} style={{marginTop: 18}}>
+                <div style={{fontSize:13.5, fontWeight:800, margin:'10px 0 4px', color:'var(--ink)'}}>
+                  {p.label} 항목 <span style={{fontWeight:500, color:'var(--muted)', fontSize:12}}>({selectedYear}년 기준 총 {yearTotal}회 주기)</span>
+                </div>
+                {pItems.map(item => {
+                  const done = completedCyclesInYear(doneMap[item.id], selectedYear);
+                  const rate = yearTotal ? Math.round((done / yearTotal) * 100) : 0;
+                  return (
+                    <div className="item" key={item.id}>
+                      <div className="item-body">
+                        <div className="item-name">{item.name}</div>
+                        <div className="item-meta">{selectedYear}년 중 {done}/{yearTotal}회 완료</div>
+                        <div className="progress-row" style={{margin:'6px 0 0'}}>
+                          <div className="progress-bar"><div className="progress-fill" style={{width:rate+'%'}}></div></div>
+                          <div className="progress-text">{rate}%</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+
+          <div className="footer-note" style={{marginTop:6}}>
+            주간·일일 항목은 실제 근무일수·공휴일 등에 따라 목표 횟수가 실제와 다를 수 있어요. 참고용 비율로 봐주세요.
+          </div>
+        </div>
       )}
 
       {view === 'lawsearch' && (

@@ -41,15 +41,39 @@ const LAW_INDEX = {
   '산업안전보건법': [
     { no: '제5조', title: '사업주 등의 의무' },
     { no: '제14조', title: '이사회 보고 및 승인 등' },
-    { no: '제15조', title: '안전보건관리책임자' },
+    {
+      no: '제15조', title: '안전보건관리책임자',
+      text: `① 사업주는 사업장을 실질적으로 총괄하여 관리하는 사람에게 해당 사업장의 다음 각 호의 업무를 총괄하여 관리하도록 하여야 한다.
+1. 사업장의 산업재해 예방계획의 수립에 관한 사항
+2. 제25조 및 제26조에 따른 안전보건관리규정의 작성 및 변경에 관한 사항
+3. 제29조에 따른 안전보건교육에 관한 사항
+4. 작업환경측정 등 작업환경의 점검 및 개선에 관한 사항
+5. 제129조부터 제132조까지에 따른 근로자의 건강진단 등 건강관리에 관한 사항
+
+② 제1항 각 호의 업무를 총괄하여 관리하는 사람(이하 "안전보건관리책임자"라 한다)은 제17조에 따른 안전관리자와 제18조에 따른 보건관리자를 지휘·감독한다.
+③ 안전보건관리책임자를 두어야 하는 사업의 종류와 사업장의 상시근로자 수, 그 밖에 필요한 사항은 대통령령으로 정한다.`,
+      lastChecked: '2026-07-23',
+    },
     { no: '제16조', title: '관리감독자' },
     { no: '제17조', title: '안전관리자' },
     { no: '제18조', title: '보건관리자' },
     { no: '제19조', title: '안전보건관리담당자' },
     { no: '제24조', title: '산업안전보건위원회' },
     { no: '제25조', title: '안전보건관리규정의 작성' },
-    { no: '제29조', title: '근로자에 대한 안전보건교육' },
-    { no: '제36조', title: '위험성평가의 실시' },
+    {
+      no: '제29조', title: '근로자에 대한 안전보건교육',
+      text: `① 사업주는 소속 근로자에게 고용노동부령으로 정하는 바에 따라 정기적으로 안전보건교육을 하여야 한다.
+② 사업주는 근로자를 채용할 때와 작업내용을 변경할 때에는 그 근로자에게 고용노동부령으로 정하는 바에 따라 해당 작업에 필요한 안전보건교육을 하여야 한다. 다만, 제31조제1항에 따른 안전보건교육을 이수한 건설 일용근로자를 채용하는 경우에는 그러하지 아니하다.
+③ 사업주는 근로자를 유해하거나 위험한 작업에 채용하거나 그 작업으로 작업내용을 변경할 때에는 제2항에 따른 안전보건교육 외에 고용노동부령으로 정하는 바에 따라 유해하거나 위험한 작업에 필요한 안전보건교육을 추가로 하여야 한다.`,
+      lastChecked: '2026-07-23',
+    },
+    {
+      no: '제36조', title: '위험성평가의 실시',
+      text: `① 사업주는 건설물, 기계·기구·설비, 원재료, 가스, 증기, 분진, 근로자의 작업행동 또는 그 밖의 업무로 인한 유해·위험 요인을 찾아내어 부상 및 질병으로 이어질 수 있는 위험성의 크기가 허용 가능한 범위인지를 평가하여야 하고, 그 결과에 따라 이 법과 이 법에 따른 명령에 따른 조치를 하여야 하며, 근로자에 대한 위험 또는 건강장해를 방지하기 위하여 필요한 경우에는 추가적인 조치를 하여야 한다.
+② 사업주는 제1항에 따른 평가 시 고용노동부장관이 정하여 고시하는 바에 따라 해당 작업장의 근로자를 참여시켜야 한다.
+③ 사업주는 제1항에 따른 평가의 결과와 조치사항을 고용노동부령으로 정하는 바에 따라 기록하여 보존하여야 한다.`,
+      lastChecked: '2026-07-23',
+    },
     { no: '제37조', title: '안전보건표지의 설치·부착' },
     { no: '제41조', title: '고객의 폭언등으로 인한 건강장해 예방조치' },
     { no: '제57조', title: '산업재해 발생 은폐 금지 및 보고 등' },
@@ -62,9 +86,25 @@ const LAW_INDEX = {
   '중대재해 처벌 등에 관한 법률': [
     { no: '제2조', title: '정의' },
     { no: '제3조', title: '적용범위' },
-    { no: '제4조', title: '사업주와 경영책임자등의 안전 및 보건 확보의무' },
+    {
+      no: '제4조', title: '사업주와 경영책임자등의 안전 및 보건 확보의무',
+      text: `① 사업주 또는 경영책임자등은 사업주나 법인 또는 기관이 실질적으로 지배·운영·관리하는 사업 또는 사업장에서 종사자의 안전·보건상 유해 또는 위험을 방지하기 위하여 그 사업 또는 사업장의 특성 및 규모 등을 고려하여 다음 각 호에 따른 조치를 하여야 한다.
+1. 재해예방에 필요한 인력 및 예산 등 안전보건관리체계의 구축 및 그 이행에 관한 조치
+2. 재해 발생 시 재발방지 대책의 수립 및 그 이행에 관한 조치
+3. 중앙행정기관·지방자치단체가 관계 법령에 따라 개선, 시정 등을 명한 사항의 이행에 관한 조치
+4. 안전·보건 관계 법령에 따른 의무이행에 필요한 관리상의 조치
+
+② 제1항제1호·제4호의 조치에 관한 구체적인 사항은 대통령령으로 정한다.`,
+      lastChecked: '2026-07-23',
+    },
     { no: '제5조', title: '도급, 용역, 위탁 등 관계에서의 안전 및 보건 확보의무' },
-    { no: '제6조', title: '중대산업재해 사업주와 경영책임자등의 처벌' },
+    {
+      no: '제6조', title: '중대산업재해 사업주와 경영책임자등의 처벌',
+      text: `① 제4조 또는 제5조를 위반하여 제2조제2호가목의 중대산업재해에 이르게 한 사업주 또는 경영책임자등은 1년 이상의 징역 또는 10억원 이하의 벌금에 처한다. 이 경우 징역과 벌금을 병과할 수 있다.
+② 제4조 또는 제5조를 위반하여 제2조제2호나목 또는 다목의 중대산업재해에 이르게 한 사업주 또는 경영책임자등은 7년 이하의 징역 또는 1억원 이하의 벌금에 처한다.
+③ 제1항 또는 제2항의 죄로 형을 선고받고 그 형이 확정된 후 5년 이내에 다시 제1항 또는 제2항의 죄를 저지른 자는 각 항에서 정한 형의 2분의 1까지 가중한다.`,
+      lastChecked: '2026-07-23',
+    },
     { no: '제7조', title: '중대산업재해의 양벌규정' },
     { no: '제8조', title: '안전보건교육의 수강' },
     { no: '제9조', title: '중대시민재해 사업주와 경영책임자등의 안전 및 보건 확보의무' },
@@ -118,6 +158,7 @@ export default function Dashboard() {
   const [doneMap, setDoneMap] = useState({}); // itemId -> Set of cycleKeys done
   const [active, setActive] = useState('daily');
   const [view, setView] = useState('checklist'); // 'checklist' | 'lawsearch'
+  const [expandedArticle, setExpandedArticle] = useState(null); // "lawName|articleNo"
   const [newItemText, setNewItemText] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -312,33 +353,65 @@ export default function Dashboard() {
       {view === 'lawsearch' && (
         <div className="panel">
           <div className="panel-head">
-            <h2>관련 법령 조문 바로가기</h2>
-            <div className="cycle-label">클릭하면 법제처 국가법령정보센터 원문이 새 탭에서 열려요</div>
+            <h2>관련 법령 조문</h2>
+            <div className="cycle-label">조문을 클릭하면 바로 아래에 원문이 펼쳐져요</div>
           </div>
           {Object.entries(LAW_INDEX).map(([lawName, articles]) => (
             <div key={lawName} style={{marginBottom: 18}}>
               <div style={{fontSize:13.5, fontWeight:800, margin:'14px 0 4px', color:'var(--ink)'}}>{lawName}</div>
-              {articles.map(a => (
-                <a
-                  key={a.no}
-                  className="item"
-                  href={lawSearchUrl(lawName, a.no)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{textDecoration:'none', color:'inherit', cursor:'pointer'}}
-                >
-                  <div className="item-body">
-                    <div className="item-name">{a.no} ({a.title})</div>
+              {articles.map(a => {
+                const key = `${lawName}|${a.no}`;
+                const isOpen = expandedArticle === key;
+                return (
+                  <div key={a.no}>
+                    <div
+                      className="item"
+                      style={{cursor:'pointer'}}
+                      onClick={() => setExpandedArticle(isOpen ? null : key)}
+                    >
+                      <div className="item-body">
+                        <div className="item-name">{a.no} ({a.title})</div>
+                        {!a.text && <div className="item-meta">원문 준비 중 — 클릭 시 law.go.kr에서 확인</div>}
+                        {a.text && <div className="item-meta">{isOpen ? '접기' : '펼쳐서 원문 보기'}</div>}
+                      </div>
+                      <div className="item-actions">
+                        <span className="icon-btn">{isOpen ? '▲' : '▼'}</span>
+                      </div>
+                    </div>
+                    {isOpen && (
+                      <div style={{
+                        background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4,
+                        padding:'14px 16px', margin:'2px 0 10px', fontSize:13, lineHeight:1.75,
+                        whiteSpace:'pre-wrap', color:'#2a2f3a',
+                      }}>
+                        {a.text ? (
+                          <>
+                            {a.text}
+                            <div style={{marginTop:12, fontSize:11.5, color:'var(--muted)'}}>
+                              확인일: {a.lastChecked} · 개정 여부는{' '}
+                              <a href={lawSearchUrl(lawName, a.no)} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>
+                                law.go.kr 최신 원문
+                              </a>
+                              에서 다시 확인하세요.
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            아직 이 조문의 원문은 앱에 넣어두지 않았어요.{' '}
+                            <a href={lawSearchUrl(lawName, a.no)} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>
+                              law.go.kr에서 바로 확인하기 ↗
+                            </a>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="item-actions">
-                    <span className="icon-btn" title="원문 보기">↗</span>
-                  </div>
-                </a>
-              ))}
+                );
+              })}
             </div>
           ))}
           <div className="footer-note" style={{marginTop:6}}>
-            law.go.kr 검색 결과로 이동하며, 항상 현재 시행 중인 최신 조문이 표시됩니다.
+            원문은 특정 시점 기준 스냅샷이에요. 법이 개정될 수 있으니 중요한 판단은 law.go.kr 최신본으로 다시 확인하세요.
           </div>
         </div>
       )}

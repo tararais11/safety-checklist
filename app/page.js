@@ -820,9 +820,13 @@ export default function Dashboard() {
             const pItems = items.filter(i => i.period === p.key);
             if (pItems.length === 0) return null;
             return (
-              <div key={p.key} style={{marginTop: 18, paddingTop: pIdx === 0 ? 0 : 16, borderTop: pIdx === 0 ? 'none' : '1px solid var(--ink)'}}>
+              <div key={p.key} style={{
+                marginTop: pIdx === 0 ? 4 : 14,
+                background:'var(--panel)', border:'1px solid var(--line)', borderRadius:6,
+                padding:'16px 18px',
+              }}>
                 <div style={{
-                  fontSize:16, fontWeight:800, margin:'10px 0 10px', color:'var(--safety)',
+                  fontSize:16, fontWeight:800, margin:'0 0 10px', color:'var(--safety)',
                   display:'flex', alignItems:'center', gap:8,
                 }}>
                   <span style={{width:5, height:16, background:'var(--safety)', borderRadius:2, display:'inline-block'}}></span>

@@ -414,6 +414,7 @@ export default function Dashboard() {
   const [doneMap, setDoneMap] = useState({}); // itemId -> Set of cycleKeys done
   const [fileMap, setFileMap] = useState({}); // itemId -> { cycleKey: {path, name} }
   const [expandedItem, setExpandedItem] = useState(null); // item.id currently expanded
+  const [expandedYearlyItem, setExpandedYearlyItem] = useState(null); // item.id currently expanded in yearly view
   const [uploading, setUploading] = useState(null); // item.id currently uploading
   const [signedUrls, setSignedUrls] = useState({}); // path -> signed url
   const [active, setActive] = useState('daily');
@@ -826,16 +827,50 @@ export default function Dashboard() {
                 {pItems.map(item => {
                   const done = completedCyclesInYear(doneMap[item.id], selectedYear);
                   const rate = yearTotal ? Math.round((done / yearTotal) * 100) : 0;
+                  const yearFiles = Object.entries(fileMap[item.id] || {})
+                    .filter(([ck]) => ck.startsWith(String(selectedYear)))
+                    .sort((a, b) => a[0].localeCompare(b[0]));
+                  const isOpen = expandedYearlyItem === item.id;
                   return (
-                    <div className="item" key={item.id}>
-                      <div className="item-body">
-                        <div className="item-name">{item.name}</div>
-                        <div className="item-meta">{selectedYear}년 중 {done}/{yearTotal}회 완료</div>
-                        <div className="progress-row" style={{margin:'6px 0 0'}}>
-                          <div className="progress-bar"><div className="progress-fill" style={{width:rate+'%'}}></div></div>
-                          <div className="progress-text">{rate}%</div>
+                    <div key={item.id}>
+                      <div className="item" style={{cursor: yearFiles.length ? 'pointer' : 'default'}}
+                        onClick={async () => {
+                          if (!yearFiles.length) return;
+                          if (isOpen) { setExpandedYearlyItem(null); return; }
+                          setExpandedYearlyItem(item.id);
+                          await Promise.all(yearFiles.map(([, f]) => getSignedUrl(f.path)));
+                        }}>
+                        <div className="item-body">
+                          <div className="item-name">{item.name}</div>
+                          <div className="item-meta">
+                            {selectedYear}년 중 {done}/{yearTotal}회 완료
+                            {yearFiles.length > 0 && <span style={{marginLeft:6}}>📎 첨부 {yearFiles.length}건 {isOpen ? '▲' : '▼'}</span>}
+                          </div>
+                          <div className="progress-row" style={{margin:'6px 0 0'}}>
+                            <div className="progress-bar"><div className="progress-fill" style={{width:rate+'%'}}></div></div>
+                            <div className="progress-text">{rate}%</div>
+                          </div>
                         </div>
                       </div>
+                      {isOpen && yearFiles.length > 0 && (
+                        <div style={{
+                          background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4,
+                          padding:'12px 16px', margin:'2px 0 10px', fontSize:12.5, lineHeight:1.8,
+                        }}>
+                          {yearFiles.map(([ck, f]) => (
+                            <div key={ck} style={{display:'flex', justifyContent:'space-between', gap:10}}>
+                              <span>📎 {f.name} <span style={{color:'var(--muted)'}}>({ck})</span></span>
+                              {signedUrls[f.path] ? (
+                                <a href={signedUrls[f.path]} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)', flexShrink:0}}>
+                                  보기 ↗
+                                </a>
+                              ) : (
+                                <span style={{color:'var(--muted)'}}>불러오는 중...</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -397,6 +397,14 @@ function completedCyclesInYear(doneSet, year) {
   return count;
 }
 
+function isImageFile(name) {
+  return /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(name || '');
+}
+
+function isPdfFile(name) {
+  return /\.pdf$/i.test(name || '');
+}
+
 export default function Dashboard() {
   const supabase = createClient();
   const router = useRouter();
@@ -691,11 +699,27 @@ export default function Dashboard() {
                             📎 <b>{evidence.name}</b>
                           </div>
                           {signedUrls[evidence.path] ? (
-                            <a href={signedUrls[evidence.path]} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>
-                              파일 열어서 보기 ↗
-                            </a>
+                            <>
+                              {isImageFile(evidence.name) && (
+                                <img
+                                  src={signedUrls[evidence.path]}
+                                  alt={evidence.name}
+                                  style={{maxWidth:'100%', maxHeight:480, borderRadius:4, border:'1px solid var(--line)', display:'block', marginBottom:8}}
+                                />
+                              )}
+                              {isPdfFile(evidence.name) && (
+                                <iframe
+                                  src={signedUrls[evidence.path]}
+                                  title={evidence.name}
+                                  style={{width:'100%', height:520, border:'1px solid var(--line)', borderRadius:4, marginBottom:8}}
+                                />
+                              )}
+                              <a href={signedUrls[evidence.path]} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>
+                                {isImageFile(evidence.name) || isPdfFile(evidence.name) ? '새 탭에서 크게 보기 ↗' : '파일 열어서 보기 ↗'}
+                              </a>
+                            </>
                           ) : (
-                            <span style={{color:'var(--muted)'}}>링크 불러오는 중...</span>
+                            <span style={{color:'var(--muted)'}}>미리보기 불러오는 중...</span>
                           )}
                           <div style={{marginTop:10, display:'flex', gap:10}}>
                             <label className="add-btn" style={{cursor:'pointer', display:'inline-block', fontSize:12}}>

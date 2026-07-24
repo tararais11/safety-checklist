@@ -490,8 +490,9 @@ export default function Dashboard() {
     setUploading(item.id);
     const cycleKey = getCycleKey(item.period);
     const { data: { user } } = await supabase.auth.getUser();
-    const safeName = file.name.replace(/[^\w.\-가-힣]/g, '_');
-    const path = `${user.id}/${item.id}/${cycleKey}-${Date.now()}-${safeName}`;
+    const extMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);
+    const ext = extMatch ? extMatch[1] : 'dat';
+    const path = `${user.id}/${item.id}/${cycleKey}-${Date.now()}.${ext}`;
 
     const { error: upErr } = await supabase.storage.from('evidence').upload(path, file);
     if (upErr) { setError('파일 업로드 실패: ' + upErr.message); setUploading(null); return; }

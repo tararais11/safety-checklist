@@ -500,10 +500,28 @@ export default function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     const extMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);
     const ext = extMatch ? extMatch[1] : 'dat';
-    const path = `${user.id}/${item.id}/${cycleKey}-${Date.now()}.${ext}`;
+    const path = `${user.id}/${item.id}/${Date.now()}.${ext}`;
+
+    // 네트워크 응답을 기다리지 않고, 방금 고른 파일을 브라우저에서 바로 미리보기로 보여줌
+    const localPreviewUrl = URL.createObjectURL(file);
+    setSignedUrls(prev => ({ ...prev, [path]: localPreviewUrl }));
+    setFileMap(prev => ({
+      ...prev,
+      [item.id]: { ...(prev[item.id] || {}), [cycleKey]: { path, name: file.name } },
+    }));
+
+    const rollback = (msg) => {
+      setError(msg);
+      setFileMap(prev => {
+        const next = { ...prev };
+        if (next[item.id]) { next[item.id] = { ...next[item.id] }; delete next[item.id][cycleKey]; }
+        return next;
+      });
+      setUploading(null);
+    };
 
     const { error: upErr } = await supabase.storage.from('evidence').upload(path, file);
-    if (upErr) { setError('파일 업로드 실패: ' + upErr.message); setUploading(null); return; }
+    if (upErr) { rollback('파일 업로드 실패: ' + upErr.message); return; }
 
     const isDone = doneMap[item.id]?.has(cycleKey);
     if (isDone) {
@@ -511,15 +529,15 @@ export default function Dashboard() {
         .update({ file_url: path, file_name: file.name })
         .eq('item_id', item.id).eq('cycle_key', cycleKey)
         .select();
-      if (updErr) { setError('파일 정보 저장 실패: ' + updErr.message); setUploading(null); return; }
+      if (updErr) { rollback('파일 정보 저장 실패: ' + updErr.message); return; }
       if (!updData || updData.length === 0) {
-        setError('파일 정보 저장 실패: 권한 문제로 기록이 갱신되지 않았어요. Supabase에서 checklist_log 수정 권한(UPDATE 정책)을 확인해주세요.');
-        setUploading(null); return;
+        rollback('파일 정보 저장 실패: 권한 문제로 기록이 갱신되지 않았어요. Supabase에서 checklist_log 수정 권한(UPDATE 정책)을 확인해주세요.');
+        return;
       }
     } else {
       const { error: insErr } = await supabase.from('checklist_log')
         .insert({ item_id: item.id, cycle_key: cycleKey, user_id: user.id, file_url: path, file_name: file.name });
-      if (insErr) { setError('파일 정보 저장 실패: ' + insErr.message); setUploading(null); return; }
+      if (insErr) { rollback('파일 정보 저장 실패: ' + insErr.message); return; }
       setDoneMap(prev => {
         const next = { ...prev };
         next[item.id] = new Set(next[item.id] || []);
@@ -528,10 +546,6 @@ export default function Dashboard() {
       });
     }
 
-    setFileMap(prev => ({
-      ...prev,
-      [item.id]: { ...(prev[item.id] || {}), [cycleKey]: { path, name: file.name } },
-    }));
     setUploading(null);
   };
 

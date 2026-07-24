@@ -818,15 +818,13 @@ export default function Dashboard() {
           {PERIODS.map(p => {
             const pItems = items.filter(i => i.period === p.key);
             if (pItems.length === 0) return null;
-            const yearTotal = totalCyclesInYear(p.key, selectedYear);
             return (
               <div key={p.key} style={{marginTop: 18}}>
                 <div style={{fontSize:13.5, fontWeight:800, margin:'10px 0 4px', color:'var(--ink)'}}>
-                  {p.label} 항목 <span style={{fontWeight:500, color:'var(--muted)', fontSize:12}}>({selectedYear}년 기준 총 {yearTotal}회 주기)</span>
+                  {p.label} 항목
                 </div>
                 {pItems.map(item => {
-                  const done = completedCyclesInYear(doneMap[item.id], selectedYear);
-                  const rate = yearTotal ? Math.round((done / yearTotal) * 100) : 0;
+                  const done = completedCyclesInYear(doneMap[item.id], selectedYear) > 0;
                   const yearFiles = Object.entries(fileMap[item.id] || {})
                     .filter(([ck]) => ck.startsWith(String(selectedYear)))
                     .sort((a, b) => a[0].localeCompare(b[0]));
@@ -843,12 +841,9 @@ export default function Dashboard() {
                         <div className="item-body">
                           <div className="item-name">{item.name}</div>
                           <div className="item-meta">
-                            {selectedYear}년 중 {done}/{yearTotal}회 완료
+                            {done ? <span className="badge ok">완료</span> : <span className="badge warn">미완료</span>}
+                            {selectedYear}년
                             {yearFiles.length > 0 && <span style={{marginLeft:6}}>📎 첨부 {yearFiles.length}건 {isOpen ? '▲' : '▼'}</span>}
-                          </div>
-                          <div className="progress-row" style={{margin:'6px 0 0'}}>
-                            <div className="progress-bar"><div className="progress-fill" style={{width:rate+'%'}}></div></div>
-                            <div className="progress-text">{rate}%</div>
                           </div>
                         </div>
                       </div>

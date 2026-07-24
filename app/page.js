@@ -404,6 +404,10 @@ export default function Dashboard() {
   const [userEmail, setUserEmail] = useState('');
   const [items, setItems] = useState([]);
   const [doneMap, setDoneMap] = useState({}); // itemId -> Set of cycleKeys done
+  const [fileMap, setFileMap] = useState({}); // itemId -> { cycleKey: {path, name} }
+  const [expandedItem, setExpandedItem] = useState(null); // item.id currently expanded
+  const [uploading, setUploading] = useState(null); // item.id currently uploading
+  const [signedUrls, setSignedUrls] = useState({}); // path -> signed url
   const [active, setActive] = useState('daily');
   const [view, setView] = useState('checklist'); // 'checklist' | 'lawsearch' | 'yearly'
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -434,18 +438,24 @@ export default function Dashboard() {
 
     const { data: logRows, error: logErr } = await supabase
       .from('checklist_log')
-      .select('item_id, cycle_key');
+      .select('item_id, cycle_key, file_url, file_name');
 
     if (logErr) { setError('기록을 불러오지 못했습니다: ' + logErr.message); setLoading(false); return; }
 
     const map = {};
+    const fmap = {};
     (logRows || []).forEach(r => {
       if (!map[r.item_id]) map[r.item_id] = new Set();
       map[r.item_id].add(r.cycle_key);
+      if (r.file_url) {
+        if (!fmap[r.item_id]) fmap[r.item_id] = {};
+        fmap[r.item_id][r.cycle_key] = { path: r.file_url, name: r.file_name };
+      }
     });
 
     setItems(itemRows || []);
     setDoneMap(map);
+    setFileMap(fmap);
     setLoading(false);
   }, [router, supabase]);
 
@@ -473,6 +483,66 @@ export default function Dashboard() {
         return next;
       });
     }
+  };
+
+  const uploadEvidence = async (item, file) => {
+    if (!file) return;
+    setUploading(item.id);
+    const cycleKey = getCycleKey(item.period);
+    const { data: { user } } = await supabase.auth.getUser();
+    const safeName = file.name.replace(/[^\w.\-가-힣]/g, '_');
+    const path = `${user.id}/${item.id}/${cycleKey}-${Date.now()}-${safeName}`;
+
+    const { error: upErr } = await supabase.storage.from('evidence').upload(path, file);
+    if (upErr) { setError('파일 업로드 실패: ' + upErr.message); setUploading(null); return; }
+
+    const isDone = doneMap[item.id]?.has(cycleKey);
+    if (isDone) {
+      await supabase.from('checklist_log')
+        .update({ file_url: path, file_name: file.name })
+        .eq('item_id', item.id).eq('cycle_key', cycleKey);
+    } else {
+      await supabase.from('checklist_log')
+        .insert({ item_id: item.id, cycle_key: cycleKey, user_id: user.id, file_url: path, file_name: file.name });
+      setDoneMap(prev => {
+        const next = { ...prev };
+        next[item.id] = new Set(next[item.id] || []);
+        next[item.id].add(cycleKey);
+        return next;
+      });
+    }
+
+    setFileMap(prev => ({
+      ...prev,
+      [item.id]: { ...(prev[item.id] || {}), [cycleKey]: { path, name: file.name } },
+    }));
+    setUploading(null);
+  };
+
+  const removeEvidence = async (item) => {
+    const cycleKey = getCycleKey(item.period);
+    const current = fileMap[item.id]?.[cycleKey];
+    if (!current) return;
+    await supabase.storage.from('evidence').remove([current.path]);
+    await supabase.from('checklist_log')
+      .update({ file_url: null, file_name: null })
+      .eq('item_id', item.id).eq('cycle_key', cycleKey);
+    setFileMap(prev => {
+      const next = { ...prev };
+      if (next[item.id]) {
+        next[item.id] = { ...next[item.id] };
+        delete next[item.id][cycleKey];
+      }
+      return next;
+    });
+  };
+
+  const getSignedUrl = async (path) => {
+    if (signedUrls[path]) return signedUrls[path];
+    const { data, error: sErr } = await supabase.storage.from('evidence').createSignedUrl(path, 3600);
+    if (sErr || !data) return null;
+    setSignedUrls(prev => ({ ...prev, [path]: data.signedUrl }));
+    return data.signedUrl;
   };
 
   const addItem = async () => {
@@ -579,19 +649,69 @@ export default function Dashboard() {
 
             {periodItems.map(item => {
               const isDone = !!doneMap[item.id]?.has(cycleKey);
+              const evidence = fileMap[item.id]?.[cycleKey];
+              const isOpen = expandedItem === item.id;
               return (
-                <div className="item" key={item.id}>
-                  <div className={"check" + (isDone ? " done" : "")} onClick={() => toggleItem(item)}></div>
-                  <div className="item-body">
-                    <div className={"item-name" + (isDone ? " done" : "")}>{item.name}</div>
-                    <div className="item-meta">
-                      {isDone ? <span className="badge ok">완료</span> : <span className="badge warn">미완료</span>}
-                      {PERIODS.find(p => p.key === item.period).unit} 점검
+                <div key={item.id}>
+                  <div className="item">
+                    <div className={"check" + (isDone ? " done" : "")} onClick={() => toggleItem(item)}></div>
+                    <div className="item-body" style={{cursor:'pointer'}} onClick={async () => {
+                      if (isOpen) { setExpandedItem(null); return; }
+                      setExpandedItem(item.id);
+                      if (evidence) await getSignedUrl(evidence.path);
+                    }}>
+                      <div className={"item-name" + (isDone ? " done" : "")}>{item.name}</div>
+                      <div className="item-meta">
+                        {isDone ? <span className="badge ok">완료</span> : <span className="badge warn">미완료</span>}
+                        {PERIODS.find(p => p.key === item.period).unit} 점검
+                        {evidence && <span style={{marginLeft:6}}>📎 {evidence.name}</span>}
+                      </div>
+                    </div>
+                    <div className="item-actions">
+                      <button className="icon-btn" onClick={() => removeItem(item.id)} title="삭제">✕</button>
                     </div>
                   </div>
-                  <div className="item-actions">
-                    <button className="icon-btn" onClick={() => removeItem(item.id)} title="삭제">✕</button>
-                  </div>
+
+                  {isOpen && (
+                    <div style={{
+                      background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4,
+                      padding:'14px 16px', margin:'2px 0 10px', fontSize:13, lineHeight:1.7,
+                    }}>
+                      {evidence ? (
+                        <>
+                          <div style={{marginBottom:8}}>
+                            📎 <b>{evidence.name}</b>
+                          </div>
+                          {signedUrls[evidence.path] ? (
+                            <a href={signedUrls[evidence.path]} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>
+                              파일 열어서 보기 ↗
+                            </a>
+                          ) : (
+                            <span style={{color:'var(--muted)'}}>링크 불러오는 중...</span>
+                          )}
+                          <div style={{marginTop:10, display:'flex', gap:10}}>
+                            <label className="add-btn" style={{cursor:'pointer', display:'inline-block', fontSize:12}}>
+                              {uploading === item.id ? '업로드 중...' : '파일 교체'}
+                              <input type="file" accept="application/pdf,image/*" style={{display:'none'}}
+                                onChange={e => e.target.files[0] && uploadEvidence(item, e.target.files[0])} />
+                            </label>
+                            <button className="icon-btn" onClick={() => removeEvidence(item)}>첨부 삭제</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div style={{marginBottom:8, color:'var(--muted)'}}>
+                            이번 주기({cycleLabel(item.period)}) 완료 증빙자료가 아직 없어요.
+                          </div>
+                          <label className="add-btn" style={{cursor:'pointer', display:'inline-block', fontSize:12}}>
+                            {uploading === item.id ? '업로드 중...' : 'PDF·사진 첨부하기'}
+                            <input type="file" accept="application/pdf,image/*" style={{display:'none'}}
+                              onChange={e => e.target.files[0] && uploadEvidence(item, e.target.files[0])} />
+                          </label>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

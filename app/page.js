@@ -665,14 +665,14 @@ export default function Dashboard() {
         사업장 특성에 맞춰 항목을 직접 추가·수정해서 사용하세요.
       </div>
 
-      <div className="tabs" style={{marginBottom:8}}>
-        <div className={"tab" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
+      <div className="tabs-primary">
+        <div className={"tab-primary" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
           체크리스트
         </div>
-        <div className={"tab" + (view === 'yearly' ? " active" : "")} onClick={() => setView('yearly')}>
+        <div className={"tab-primary" + (view === 'yearly' ? " active" : "")} onClick={() => setView('yearly')}>
           연도별 기록
         </div>
-        <div className={"tab" + (view === 'lawsearch' ? " active" : "")} onClick={() => setView('lawsearch')}>
+        <div className={"tab-primary" + (view === 'lawsearch' ? " active" : "")} onClick={() => setView('lawsearch')}>
           법령검색
         </div>
       </div>

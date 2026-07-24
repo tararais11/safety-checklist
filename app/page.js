@@ -616,13 +616,31 @@ export default function Dashboard() {
     setTemplates(prev => prev.filter(t => t.id !== tpl.id));
   };
 
-  const getTemplateSignedUrl = async (path, downloadName) => {
+  const getTemplateSignedUrl = async (path) => {
     if (templateSignedUrls[path]) return templateSignedUrls[path];
-    const { data, error: sErr } = await supabase.storage.from('templates')
-      .createSignedUrl(path, 3600, downloadName ? { download: downloadName } : undefined);
+    const { data, error: sErr } = await supabase.storage.from('templates').createSignedUrl(path, 3600);
     if (sErr || !data) return null;
     setTemplateSignedUrls(prev => ({ ...prev, [path]: data.signedUrl }));
     return data.signedUrl;
+  };
+
+  const downloadTemplate = async (tpl) => {
+    const url = await getTemplateSignedUrl(tpl.file_url);
+    if (!url) { setError('파일을 여는 데 실패했어요.'); return; }
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = tpl.file_name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      setError('다운로드 중 오류가 발생했어요: ' + e.message);
+    }
   };
 
   const addItem = async () => {
@@ -1042,11 +1060,7 @@ export default function Dashboard() {
               <div className="item-actions">
                 <button
                   className="icon-btn"
-                  onClick={async () => {
-                    const url = await getTemplateSignedUrl(tpl.file_url, tpl.file_name);
-                    if (url) window.open(url, '_blank');
-                    else setError('파일을 여는 데 실패했어요.');
-                  }}
+                  onClick={() => downloadTemplate(tpl)}
                   title="다운로드"
                 >
                   ⬇

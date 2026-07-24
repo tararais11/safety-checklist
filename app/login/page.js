@@ -48,7 +48,7 @@ export default function LoginPage() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <div className="auth-logo">안전보건 체크리스트</div>
+        <div className="auth-logo">안전보건 통합관리시스템</div>
         <div className="auth-sub">산업안전보건법 · 중대재해처벌법 대응 관리</div>
 
         <div className="auth-tabs">

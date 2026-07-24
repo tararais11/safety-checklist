@@ -498,12 +498,19 @@ export default function Dashboard() {
 
     const isDone = doneMap[item.id]?.has(cycleKey);
     if (isDone) {
-      await supabase.from('checklist_log')
+      const { error: updErr, data: updData } = await supabase.from('checklist_log')
         .update({ file_url: path, file_name: file.name })
-        .eq('item_id', item.id).eq('cycle_key', cycleKey);
+        .eq('item_id', item.id).eq('cycle_key', cycleKey)
+        .select();
+      if (updErr) { setError('파일 정보 저장 실패: ' + updErr.message); setUploading(null); return; }
+      if (!updData || updData.length === 0) {
+        setError('파일 정보 저장 실패: 권한 문제로 기록이 갱신되지 않았어요. Supabase에서 checklist_log 수정 권한(UPDATE 정책)을 확인해주세요.');
+        setUploading(null); return;
+      }
     } else {
-      await supabase.from('checklist_log')
+      const { error: insErr } = await supabase.from('checklist_log')
         .insert({ item_id: item.id, cycle_key: cycleKey, user_id: user.id, file_url: path, file_name: file.name });
+      if (insErr) { setError('파일 정보 저장 실패: ' + insErr.message); setUploading(null); return; }
       setDoneMap(prev => {
         const next = { ...prev };
         next[item.id] = new Set(next[item.id] || []);

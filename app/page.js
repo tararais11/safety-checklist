@@ -815,11 +815,11 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {PERIODS.map(p => {
+          {PERIODS.map((p, pIdx) => {
             const pItems = items.filter(i => i.period === p.key);
             if (pItems.length === 0) return null;
             return (
-              <div key={p.key} style={{marginTop: 18}}>
+              <div key={p.key} style={{marginTop: 18, paddingTop: pIdx === 0 ? 0 : 16, borderTop: pIdx === 0 ? 'none' : '1px solid var(--ink)'}}>
                 <div style={{fontSize:13.5, fontWeight:800, margin:'10px 0 4px', color:'var(--ink)'}}>
                   {p.label} 항목
                 </div>

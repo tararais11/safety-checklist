@@ -602,7 +602,7 @@ export default function Dashboard() {
       <div className="tag">SAFETY &amp; HEALTH COMPLIANCE</div>
       <div className="masthead">
         <div>
-          <h1>안전보건서류 주기별 체크리스트</h1>
+          <h1>안전보건 통합관리시스템</h1>
           <div className="sub">산업안전보건법 · 중대재해처벌법 대응 — 일일/주간/월간/분기/반기/연간 이행 관리</div>
         </div>
       </div>

@@ -660,11 +660,6 @@ export default function Dashboard() {
 
       {error && <div className="disclaimer">{error}</div>}
 
-      <div className="disclaimer">
-        ⚠ 아래 항목은 업종·사업장 규모에 따라 실제 의무사항과 다를 수 있는 <b>일반 참고용 체크리스트</b>입니다.
-        사업장 특성에 맞춰 항목을 직접 추가·수정해서 사용하세요.
-      </div>
-
       <div className="tabs-primary">
         <div className={"tab-primary" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
           체크리스트

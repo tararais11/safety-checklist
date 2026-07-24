@@ -616,9 +616,10 @@ export default function Dashboard() {
     setTemplates(prev => prev.filter(t => t.id !== tpl.id));
   };
 
-  const getTemplateSignedUrl = async (path) => {
+  const getTemplateSignedUrl = async (path, downloadName) => {
     if (templateSignedUrls[path]) return templateSignedUrls[path];
-    const { data, error: sErr } = await supabase.storage.from('templates').createSignedUrl(path, 3600);
+    const { data, error: sErr } = await supabase.storage.from('templates')
+      .createSignedUrl(path, 3600, downloadName ? { download: downloadName } : undefined);
     if (sErr || !data) return null;
     setTemplateSignedUrls(prev => ({ ...prev, [path]: data.signedUrl }));
     return data.signedUrl;
@@ -1042,7 +1043,7 @@ export default function Dashboard() {
                 <button
                   className="icon-btn"
                   onClick={async () => {
-                    const url = await getTemplateSignedUrl(tpl.file_url);
+                    const url = await getTemplateSignedUrl(tpl.file_url, tpl.file_name);
                     if (url) window.open(url, '_blank');
                     else setError('파일을 여는 데 실패했어요.');
                   }}

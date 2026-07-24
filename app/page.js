@@ -419,12 +419,15 @@ export default function Dashboard() {
   const [signedUrls, setSignedUrls] = useState({}); // path -> signed url
   const [active, setActive] = useState('daily');
   const [activeLawCategory, setActiveLawCategory] = useState(null); // set on first render from LAW_INDEX keys
-  const [view, setView] = useState('checklist'); // 'checklist' | 'lawsearch' | 'yearly'
+  const [view, setView] = useState('checklist'); // 'checklist' | 'lawsearch' | 'yearly' | 'templates'
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [expandedArticle, setExpandedArticle] = useState(null); // "lawName|articleNo"
   const [newItemText, setNewItemText] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [templates, setTemplates] = useState([]);
+  const [templateUploading, setTemplateUploading] = useState(false);
+  const [templateSignedUrls, setTemplateSignedUrls] = useState({});
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -467,6 +470,13 @@ export default function Dashboard() {
     setItems(itemRows || []);
     setDoneMap(map);
     setFileMap(fmap);
+
+    const { data: templateRows } = await supabase
+      .from('templates')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setTemplates(templateRows || []);
+
     setLoading(false);
   }, [router, supabase]);
 
@@ -578,6 +588,42 @@ export default function Dashboard() {
     return data.signedUrl;
   };
 
+  const uploadTemplate = async (file) => {
+    if (!file) return;
+    setTemplateUploading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const extMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);
+    const ext = extMatch ? extMatch[1] : 'dat';
+    const path = `${user.id}/${Date.now()}.${ext}`;
+
+    const { error: upErr } = await supabase.storage.from('templates').upload(path, file);
+    if (upErr) { setError('양식 업로드 실패: ' + upErr.message); setTemplateUploading(false); return; }
+
+    const { data, error: insErr } = await supabase
+      .from('templates')
+      .insert({ user_id: user.id, name: file.name, file_url: path, file_name: file.name })
+      .select();
+    if (insErr) { setError('양식 정보 저장 실패: ' + insErr.message); setTemplateUploading(false); return; }
+
+    setTemplates(prev => [...(data || []), ...prev]);
+    setTemplateUploading(false);
+  };
+
+  const deleteTemplate = async (tpl) => {
+    if (!confirm(`"${tpl.file_name}" 양식을 삭제할까요?`)) return;
+    await supabase.storage.from('templates').remove([tpl.file_url]);
+    await supabase.from('templates').delete().eq('id', tpl.id);
+    setTemplates(prev => prev.filter(t => t.id !== tpl.id));
+  };
+
+  const getTemplateSignedUrl = async (path) => {
+    if (templateSignedUrls[path]) return templateSignedUrls[path];
+    const { data, error: sErr } = await supabase.storage.from('templates').createSignedUrl(path, 3600);
+    if (sErr || !data) return null;
+    setTemplateSignedUrls(prev => ({ ...prev, [path]: data.signedUrl }));
+    return data.signedUrl;
+  };
+
   const addItem = async () => {
     const text = newItemText.trim();
     if (!text) return;
@@ -671,6 +717,9 @@ export default function Dashboard() {
         </div>
         <div className={"tab-primary" + (view === 'lawsearch' ? " active" : "")} onClick={() => setView('lawsearch')}>
           법령검색
+        </div>
+        <div className={"tab-primary" + (view === 'templates' ? " active" : "")} onClick={() => setView('templates')}>
+          양식함
         </div>
       </div>
 
@@ -965,6 +1014,48 @@ export default function Dashboard() {
           </>
         );
       })()}
+
+      {view === 'templates' && (
+        <div className="panel">
+          <div className="panel-head">
+            <h2>양식함</h2>
+            <div className="cycle-label">위험성평가표, TBM일지 같은 빈 양식 파일을 올려두고 다운로드해서 쓰세요</div>
+          </div>
+
+          <div className="add-row" style={{marginTop:0, marginBottom:16}}>
+            <label className="add-btn" style={{cursor:'pointer', display:'inline-block'}}>
+              {templateUploading ? '업로드 중...' : '+ 양식 파일 올리기'}
+              <input type="file" style={{display:'none'}}
+                onChange={e => e.target.files[0] && uploadTemplate(e.target.files[0])} />
+            </label>
+          </div>
+
+          {templates.length === 0 && <div className="empty">아직 올린 양식이 없어요. 위 버튼으로 추가해보세요.</div>}
+
+          {templates.map(tpl => (
+            <div className="item" key={tpl.id}>
+              <div className="item-body">
+                <div className="item-name">📄 {tpl.file_name}</div>
+                <div className="item-meta">{new Date(tpl.created_at).toLocaleDateString('ko-KR')} 업로드</div>
+              </div>
+              <div className="item-actions">
+                <button
+                  className="icon-btn"
+                  onClick={async () => {
+                    const url = await getTemplateSignedUrl(tpl.file_url);
+                    if (url) window.open(url, '_blank');
+                    else setError('파일을 여는 데 실패했어요.');
+                  }}
+                  title="다운로드"
+                >
+                  ⬇
+                </button>
+                <button className="icon-btn" onClick={() => deleteTemplate(tpl)} title="삭제">✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="footer-note">
         모든 데이터는 내 계정으로 클라우드에 저장되어 어느 기기에서 로그인해도 동일하게 보입니다.

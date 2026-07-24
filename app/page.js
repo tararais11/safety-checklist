@@ -721,7 +721,6 @@ export default function Dashboard() {
                       <div className={"item-name" + (isDone ? " done" : "")}>{item.name}</div>
                       <div className="item-meta">
                         {isDone ? <span className="badge ok">완료</span> : <span className="badge warn">미완료</span>}
-                        {PERIODS.find(p => p.key === item.period).unit} 점검
                         {evidence && <span style={{marginLeft:6}}>📎 {evidence.name}</span>}
                       </div>
                     </div>

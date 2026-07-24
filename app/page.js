@@ -802,18 +802,19 @@ export default function Dashboard() {
       )}
 
       {view === 'yearly' && (
-        <div className="panel">
-          <div className="panel-head">
-            <h2>연도별 완료 기록</h2>
-            <div className="cycle-label">체크 기록은 연도가 지나도 사라지지 않아요 — 연도를 선택해서 지난 기록을 볼 수 있어요</div>
-          </div>
-
-          <div className="tabs" style={{marginTop:10, marginBottom:6}}>
+        <>
+          <div className="tabs">
             {availableYears.map(y => (
               <div key={y} className={"tab" + (selectedYear === y ? " active" : "")} onClick={() => setSelectedYear(y)}>
                 {y}년{y === thisYear ? ' (현재)' : ''}
               </div>
             ))}
+          </div>
+
+          <div className="panel">
+          <div className="panel-head">
+            <h2>연도별 완료 기록</h2>
+            <div className="cycle-label">체크 기록은 연도가 지나도 사라지지 않아요 — 연도를 선택해서 지난 기록을 볼 수 있어요</div>
           </div>
 
           {PERIODS.map((p, pIdx) => {
@@ -885,7 +886,8 @@ export default function Dashboard() {
           <div className="footer-note" style={{marginTop:6}}>
             주간·일일 항목은 실제 근무일수·공휴일 등에 따라 목표 횟수가 실제와 다를 수 있어요. 참고용 비율로 봐주세요.
           </div>
-        </div>
+          </div>
+        </>
       )}
 
       {view === 'lawsearch' && (() => {

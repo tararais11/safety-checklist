@@ -433,6 +433,7 @@ export default function Dashboard() {
     let { data: itemRows, error: itemErr } = await supabase
       .from('checklist_items')
       .select('*')
+      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true });
 
     if (itemErr) { setError('항목을 불러오지 못했습니다: ' + itemErr.message); setLoading(false); return; }
@@ -589,9 +590,34 @@ export default function Dashboard() {
     }
   };
 
-  const removeItem = async (id) => {
+  const removeItem = async (id, name) => {
+    if (!confirm(`"${name}" 항목을 삭제할까요? 완료 기록과 첨부파일도 함께 삭제되며 되돌릴 수 없습니다.`)) return;
     await supabase.from('checklist_items').delete().eq('id', id);
     setItems(prev => prev.filter(i => i.id !== id));
+  };
+
+  const moveItem = async (item, direction) => {
+    const group = items
+      .filter(i => i.period === item.period)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || new Date(a.created_at) - new Date(b.created_at));
+    const idx = group.findIndex(i => i.id === item.id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= group.length) return;
+
+    // 그룹 전체 순서를 0,1,2... 로 정리한 뒤 두 항목만 맞바꿔요.
+    const normalized = group.map((it, i) => ({ id: it.id, sort_order: i }));
+    const tmp = normalized[idx].sort_order;
+    normalized[idx].sort_order = normalized[swapIdx].sort_order;
+    normalized[swapIdx].sort_order = tmp;
+
+    setItems(prev => prev.map(p => {
+      const found = normalized.find(n => n.id === p.id);
+      return found ? { ...p, sort_order: found.sort_order } : p;
+    }));
+
+    await Promise.all(normalized.map(n =>
+      supabase.from('checklist_items').update({ sort_order: n.sort_order }).eq('id', n.id)
+    ));
   };
 
   const handleLogout = async () => {
@@ -602,7 +628,9 @@ export default function Dashboard() {
 
   if (loading) return <div className="wrap"><div className="empty">불러오는 중...</div></div>;
 
-  const periodItems = items.filter(i => i.period === active);
+  const periodItems = items
+    .filter(i => i.period === active)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || new Date(a.created_at) - new Date(b.created_at));
   const cycleKey = getCycleKey(active);
   const doneCount = periodItems.filter(i => doneMap[i.id]?.has(cycleKey)).length;
   const total = periodItems.length;
@@ -677,7 +705,7 @@ export default function Dashboard() {
 
             {periodItems.length === 0 && <div className="empty">항목이 없습니다. 아래에서 추가해보세요.</div>}
 
-            {periodItems.map(item => {
+            {periodItems.map((item, idx) => {
               const isDone = !!doneMap[item.id]?.has(cycleKey);
               const evidence = fileMap[item.id]?.[cycleKey];
               const isOpen = expandedItem === item.id;
@@ -698,7 +726,9 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="item-actions">
-                      <button className="icon-btn" onClick={() => removeItem(item.id)} title="삭제">✕</button>
+                      <button className="icon-btn" onClick={() => moveItem(item, 'up')} disabled={idx === 0} title="위로" style={idx === 0 ? {opacity:0.3, cursor:'default'} : {}}>▲</button>
+                      <button className="icon-btn" onClick={() => moveItem(item, 'down')} disabled={idx === periodItems.length - 1} title="아래로" style={idx === periodItems.length - 1 ? {opacity:0.3, cursor:'default'} : {}}>▼</button>
+                      <button className="icon-btn" onClick={() => removeItem(item.id, item.name)} title="삭제">✕</button>
                     </div>
                   </div>
 

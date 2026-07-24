@@ -418,6 +418,7 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(null); // item.id currently uploading
   const [signedUrls, setSignedUrls] = useState({}); // path -> signed url
   const [active, setActive] = useState('daily');
+  const [activeLawCategory, setActiveLawCategory] = useState(null); // set on first render from LAW_INDEX keys
   const [view, setView] = useState('checklist'); // 'checklist' | 'lawsearch' | 'yearly'
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [expandedArticle, setExpandedArticle] = useState(null); // "lawName|articleNo"
@@ -820,7 +821,11 @@ export default function Dashboard() {
             if (pItems.length === 0) return null;
             return (
               <div key={p.key} style={{marginTop: 18, paddingTop: pIdx === 0 ? 0 : 16, borderTop: pIdx === 0 ? 'none' : '1px solid var(--ink)'}}>
-                <div style={{fontSize:13.5, fontWeight:800, margin:'10px 0 4px', color:'var(--ink)'}}>
+                <div style={{
+                  fontSize:16, fontWeight:800, margin:'10px 0 10px', color:'var(--safety)',
+                  display:'flex', alignItems:'center', gap:8,
+                }}>
+                  <span style={{width:5, height:16, background:'var(--safety)', borderRadius:2, display:'inline-block'}}></span>
                   {p.label} 항목
                 </div>
                 {pItems.map(item => {
@@ -879,17 +884,27 @@ export default function Dashboard() {
         </div>
       )}
 
-      {view === 'lawsearch' && (
-        <div className="panel">
-          <div className="panel-head">
-            <h2>관련 법령 조문</h2>
-            <div className="cycle-label">조문을 클릭하면 바로 아래에 원문이 펼쳐져요</div>
-          </div>
-          {Object.entries(LAW_INDEX).map(([lawName, articles]) => (
-            <div key={lawName} style={{marginBottom: 18}}>
-              <div style={{fontSize:13.5, fontWeight:800, margin:'14px 0 4px', color:'var(--ink)'}}>{lawName}</div>
+      {view === 'lawsearch' && (() => {
+        const lawNames = Object.keys(LAW_INDEX);
+        const currentLaw = activeLawCategory && lawNames.includes(activeLawCategory) ? activeLawCategory : lawNames[0];
+        const articles = LAW_INDEX[currentLaw];
+        return (
+          <>
+            <div className="tabs">
+              {lawNames.map(name => (
+                <div key={name} className={"tab" + (currentLaw === name ? " active" : "")} onClick={() => setActiveLawCategory(name)}>
+                  {name}
+                  <span className="count">{LAW_INDEX[name].length}</span>
+                </div>
+              ))}
+            </div>
+            <div className="panel">
+              <div className="panel-head">
+                <h2>{currentLaw}</h2>
+                <div className="cycle-label">조문을 클릭하면 바로 아래에 원문이 펼쳐져요</div>
+              </div>
               {articles.map(a => {
-                const key = `${lawName}|${a.no}`;
+                const key = `${currentLaw}|${a.no}`;
                 const isOpen = expandedArticle === key;
                 return (
                   <div key={a.no}>
@@ -918,7 +933,7 @@ export default function Dashboard() {
                             {a.text}
                             <div style={{marginTop:12, fontSize:11.5, color:'var(--muted)'}}>
                               확인일: {a.lastChecked} · 개정 여부는{' '}
-                              <a href={lawSearchUrl(lawName, a.no)} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>
+                              <a href={lawSearchUrl(currentLaw, a.no)} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>
                                 law.go.kr 최신 원문
                               </a>
                               에서 다시 확인하세요.
@@ -927,7 +942,7 @@ export default function Dashboard() {
                         ) : (
                           <>
                             아직 이 조문의 원문은 앱에 넣어두지 않았어요.{' '}
-                            <a href={lawSearchUrl(lawName, a.no)} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>
+                            <a href={lawSearchUrl(currentLaw, a.no)} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>
                               law.go.kr에서 바로 확인하기 ↗
                             </a>
                           </>
@@ -937,13 +952,13 @@ export default function Dashboard() {
                   </div>
                 );
               })}
+              <div className="footer-note" style={{marginTop:6}}>
+                원문은 특정 시점 기준 스냅샷이에요. 법이 개정될 수 있으니 중요한 판단은 law.go.kr 최신본으로 다시 확인하세요.
+              </div>
             </div>
-          ))}
-          <div className="footer-note" style={{marginTop:6}}>
-            원문은 특정 시점 기준 스냅샷이에요. 법이 개정될 수 있으니 중요한 판단은 law.go.kr 최신본으로 다시 확인하세요.
-          </div>
-        </div>
-      )}
+          </>
+        );
+      })()}
 
       <div className="footer-note">
         모든 데이터는 내 계정으로 클라우드에 저장되어 어느 기기에서 로그인해도 동일하게 보입니다.

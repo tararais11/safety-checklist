@@ -1062,6 +1062,7 @@ export default function Dashboard() {
                   className="icon-btn"
                   onClick={() => downloadTemplate(tpl)}
                   title="다운로드"
+                  style={{fontSize:22, padding:'4px 10px', color:'var(--safety)'}}
                 >
                   ⬇
                 </button>

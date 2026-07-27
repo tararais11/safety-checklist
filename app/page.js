@@ -1062,7 +1062,7 @@ export default function Dashboard() {
                   className="icon-btn"
                   onClick={() => downloadTemplate(tpl)}
                   title="다운로드"
-                  style={{fontSize:22, padding:'4px 10px', color:'var(--safety)'}}
+                  style={{fontSize:13, fontWeight:700, padding:'6px 12px', color:'var(--safety)'}}
                 >
                   다운로드
                 </button>

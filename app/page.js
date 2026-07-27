@@ -1064,7 +1064,7 @@ export default function Dashboard() {
                   title="다운로드"
                   style={{fontSize:22, padding:'4px 10px', color:'var(--safety)'}}
                 >
-                  ⬇
+                  다운로드
                 </button>
                 <button className="icon-btn" onClick={() => deleteTemplate(tpl)} title="삭제">✕</button>
               </div>

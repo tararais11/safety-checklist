@@ -80,9 +80,50 @@ body{
 .reset-link{color:var(--safety);cursor:pointer;text-decoration:underline;}
 
 /* 로그인 페이지 */
-.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-.auth-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:32px 28px;}
-.auth-logo{font-size:22px;font-weight:800;margin-bottom:4px;}
+.auth-wrap{min-height:100vh;display:flex;}
+.auth-hero{
+  flex:1.1;position:relative;overflow:hidden;
+  background:var(--ink);color:#fff;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:56px 56px 48px;
+}
+.auth-hero-decor{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(115deg, rgba(194,65,12,0.9) 0 14px, transparent 14px 28px);
+  clip-path:polygon(58% 0, 100% 0, 100% 100%, 30% 100%);
+  opacity:0.9;
+}
+.auth-hero-decor2{
+  position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(115deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 26px);
+}
+.auth-hero-top{position:relative;z-index:1;}
+.auth-hero-eyebrow{
+  font-size:11px;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;
+  color:#f4dcc9;margin-bottom:18px;
+}
+.auth-hero-title{
+  font-size:40px;font-weight:800;line-height:1.2;letter-spacing:-0.02em;
+  max-width:480px;
+}
+.auth-hero-title span{color:#ff8a4c;}
+.auth-hero-sub{
+  margin-top:18px;font-size:14.5px;line-height:1.8;color:#c7cbd6;max-width:400px;
+}
+.auth-hero-bottom{position:relative;z-index:1;display:flex;gap:28px;flex-wrap:wrap;}
+.auth-hero-stat{border-left:2px solid rgba(255,138,76,0.6);padding-left:12px;}
+.auth-hero-stat b{display:block;font-size:20px;font-weight:800;}
+.auth-hero-stat span{font-size:11.5px;color:#9aa0ae;}
+
+.auth-panel{
+  flex:1;min-width:380px;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;background:var(--paper);
+  background-image:repeating-linear-gradient(135deg, rgba(194,65,12,0.035) 0 2px, transparent 2px 26px);
+}
+.auth-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:36px 32px;box-shadow:0 12px 32px rgba(28,34,48,0.08);}
+.auth-logo{font-size:20px;font-weight:800;margin-bottom:4px;}
 .auth-sub{font-size:12.5px;color:var(--muted);margin-bottom:24px;}
 .auth-tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:20px;}
 .auth-tab{flex:1;text-align:center;padding:10px 0;font-size:13.5px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
@@ -97,3 +138,10 @@ body{
 .auth-msg{font-size:12.5px;margin-top:12px;padding:10px 12px;border-radius:4px;}
 .auth-msg.error{background:var(--warn-bg);color:var(--warn);}
 .auth-msg.success{background:var(--ok-bg);color:var(--ok);}
+
+@media (max-width: 860px){
+  .auth-wrap{flex-direction:column;}
+  .auth-hero{padding:40px 28px 32px;min-height:280px;}
+  .auth-hero-title{font-size:28px;}
+  .auth-panel{min-width:0;}
+}

@@ -451,7 +451,11 @@ export default function Dashboard() {
     setUserEmail(user.email);
 
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    setIsAdmin(profile?.role === 'admin');
+    const adminFlag = profile?.role === 'admin';
+    setIsAdmin(adminFlag);
+    if (!adminFlag) {
+      setView(v => (v === 'checklist' || v === 'yearly') ? 'lawsearch' : v);
+    }
 
     let { data: itemRows, error: itemErr } = await supabase
       .from('checklist_items')
@@ -743,12 +747,16 @@ export default function Dashboard() {
       <div className="app-body">
       <aside className="sidebar">
         <nav>
-          <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
-            <span>📋</span> 체크리스트
-          </div>
-          <div className={"sidebar-nav-item" + (view === 'yearly' ? " active" : "")} onClick={() => setView('yearly')}>
-            <span>📅</span> 연도별 기록
-          </div>
+          {isAdmin && (
+            <>
+              <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
+                <span>📋</span> 체크리스트
+              </div>
+              <div className={"sidebar-nav-item" + (view === 'yearly' ? " active" : "")} onClick={() => setView('yearly')}>
+                <span>📅</span> 연도별 기록
+              </div>
+            </>
+          )}
           <div className={"sidebar-nav-item" + (view === 'lawsearch' ? " active" : "")} onClick={() => setView('lawsearch')}>
             <span>⚖️</span> 법령검색
           </div>
@@ -775,7 +783,7 @@ export default function Dashboard() {
 
       {error && <div className="disclaimer">{error}</div>}
 
-      {view === 'checklist' && (
+      {view === 'checklist' && isAdmin && (
         <>
           <div className="tabs">
             {PERIODS.map(p => {
@@ -902,7 +910,7 @@ export default function Dashboard() {
         </>
       )}
 
-      {view === 'yearly' && (
+      {view === 'yearly' && isAdmin && (
         <>
           <div className="tabs">
             {availableYears.map(y => (

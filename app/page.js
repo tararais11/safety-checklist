@@ -424,6 +424,7 @@ export default function Dashboard() {
   const router = useRouter();
 
   const [userEmail, setUserEmail] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [items, setItems] = useState([]);
   const [doneMap, setDoneMap] = useState({}); // itemId -> Set of cycleKeys done
   const [fileMap, setFileMap] = useState({}); // itemId -> { cycleKey: {path, name} }
@@ -448,6 +449,9 @@ export default function Dashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
     setUserEmail(user.email);
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    setIsAdmin(profile?.role === 'admin');
 
     let { data: itemRows, error: itemErr } = await supabase
       .from('checklist_items')
@@ -751,6 +755,11 @@ export default function Dashboard() {
           <div className={"sidebar-nav-item" + (view === 'templates' ? " active" : "")} onClick={() => setView('templates')}>
             <span>📁</span> 양식함
           </div>
+          {isAdmin && (
+            <div className="sidebar-nav-item" onClick={() => router.push('/admin')}>
+              <span>🛡️</span> 관리자
+            </div>
+          )}
         </nav>
       </aside>
 

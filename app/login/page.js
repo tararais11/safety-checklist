@@ -38,7 +38,7 @@ export default function LoginPage() {
       if (error) {
         setMsg({ type: 'error', text: '회원가입 실패: ' + error.message });
       } else {
-        setMsg({ type: 'success', text: '가입 확인 이메일을 보냈습니다. 메일함을 확인해주세요. (Supabase 설정에서 이메일 확인을 껐다면 바로 로그인하세요.)' });
+        setMsg({ type: 'success', text: '가입 신청이 접수되었어요. 관리자 승인 후 로그인할 수 있습니다.' });
         setMode('login');
       }
     }

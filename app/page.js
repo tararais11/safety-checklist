@@ -13,6 +13,13 @@ const VIEW_TITLES = {
   templates: '양식함',
 };
 
+const VIEW_ICONS = {
+  checklist: '📋',
+  yearly: '📅',
+  lawsearch: '⚖️',
+  templates: '📁',
+};
+
 const PERIODS = [
   { key: 'daily', label: '일일', unit: '매일' },
   { key: 'weekly', label: '주간', unit: '매주' },
@@ -719,13 +726,25 @@ export default function Dashboard() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="sidebar-brand-tag">SAFETY &amp; HEALTH</div>
-          <div className="sidebar-brand-title">안전보건 통합관리시스템</div>
+      <div className="topbar-global">
+        <div className="topbar-global-brand">
+          <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
         </div>
-        <nav className="sidebar-nav">
-          <div className="sidebar-nav-label">메뉴</div>
+        <div className="topbar-global-right">
+          <span className="topbar-global-email">{userEmail}</span>
+          <button className="topbar-global-logout" onClick={handleLogout}>로그아웃</button>
+        </div>
+      </div>
+
+      <div className="tab-strip">
+        <div className="tab-strip-pill">
+          <span>{VIEW_ICONS[view]}</span> {VIEW_TITLES[view]}
+        </div>
+      </div>
+
+      <div className="app-body">
+      <aside className="sidebar">
+        <nav>
           <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
             <span>📋</span> 체크리스트
           </div>
@@ -739,10 +758,6 @@ export default function Dashboard() {
             <span>📁</span> 양식함
           </div>
         </nav>
-        <div className="sidebar-footer">
-          <div className="sidebar-user-email">{userEmail}</div>
-          <button className="sidebar-logout-btn" onClick={handleLogout}>로그아웃</button>
-        </div>
       </aside>
 
       <main className="main-content">
@@ -1093,6 +1108,7 @@ export default function Dashboard() {
       </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }

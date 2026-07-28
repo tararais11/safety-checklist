@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../../lib/supabase/client';
+import AdminShell from '../../components/AdminShell';
 
 export default function AdminEvaluationsPage() {
   const supabase = createClient();
@@ -184,13 +185,13 @@ export default function AdminEvaluationsPage() {
     alert('검토 결과가 저장되었어요.');
   };
 
-  if (loading) return <div className="wrap"><div className="empty">불러오는 중...</div></div>;
-  if (!isAdmin) return <div className="wrap"><div className="disclaimer">관리자만 접근할 수 있는 페이지예요.</div></div>;
+  if (loading) return <AdminShell active="evaluations"><div className="empty">불러오는 중...</div></AdminShell>;
+  if (!isAdmin) return <AdminShell active="evaluations"><div className="disclaimer">관리자만 접근할 수 있는 페이지예요.</div></AdminShell>;
 
   const statusLabel = { pending: '대기중', submitted: '제출완료', reviewed: '검토완료' };
 
   return (
-    <div className="wrap">
+    <AdminShell active="evaluations">
       <div className="masthead">
         <div>
           <h1>협력업체 평가 관리</h1>
@@ -332,7 +333,7 @@ export default function AdminEvaluationsPage() {
           </div>
         ))}
       </div>
-    </div>
+    </AdminShell>
   );
 }
 

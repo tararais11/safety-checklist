@@ -736,12 +736,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="tab-strip">
-        <div className="tab-strip-pill">
-          <span>{VIEW_ICONS[view]}</span> {VIEW_TITLES[view]}
-        </div>
-      </div>
-
       <div className="app-body">
       <aside className="sidebar">
         <nav>

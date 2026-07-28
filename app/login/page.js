@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null); // {type, text}
   const router = useRouter();
@@ -34,7 +35,10 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({
+        email, password,
+        options: { data: { company_name: companyName || null } },
+      });
       if (error) {
         setMsg({ type: 'error', text: '회원가입 실패: ' + error.message });
       } else {
@@ -69,6 +73,12 @@ export default function LoginPage() {
             <label>비밀번호</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
           </div>
+          {mode === 'signup' && (
+            <div className="auth-field">
+              <label>회사명 (협력업체로 가입하시는 경우 입력)</label>
+              <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="예: 주식회사 오피스넷" />
+            </div>
+          )}
           <button className="auth-submit" type="submit" disabled={loading}>
             {loading ? '처리 중...' : (mode === 'login' ? '로그인' : '회원가입')}
           </button>

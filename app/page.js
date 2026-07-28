@@ -770,7 +770,7 @@ export default function Dashboard() {
           <span className="topbar-global-email">{userEmail}</span>
           <button
             className="topbar-global-logout"
-            style={{background:'transparent', color:'var(--muted)', border:'1px solid var(--line)', fontSize:15, padding:'6px 10px'}}
+            style={{padding:'7px 12px', fontSize:15}}
             onClick={() => { setShowSettings(true); setSettingsMsg(null); }}
             title="개인 설정"
           >

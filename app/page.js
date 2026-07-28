@@ -693,7 +693,7 @@ export default function Dashboard() {
     router.refresh();
   };
 
-  if (loading) return <div className="wrap"><div className="empty">불러오는 중...</div></div>;
+  if (loading) return <div className="app-shell"><div className="main-content"><div className="content-inner"><div className="empty">불러오는 중...</div></div></div></div>;
 
   const periodItems = items
     .filter(i => i.period === active)
@@ -711,12 +711,34 @@ export default function Dashboard() {
   const availableYears = Array.from(yearsFromData).sort((a, b) => b - a);
 
   return (
-    <div className="wrap">
-      <div className="topbar">
-        <span>{userEmail}</span>
-        <button className="logout-btn" onClick={handleLogout}>로그아웃</button>
-      </div>
-      <div className="tag">SAFETY &amp; HEALTH COMPLIANCE</div>
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-tag">SAFETY &amp; HEALTH</div>
+          <div className="sidebar-brand-title">안전보건<br/>통합관리시스템</div>
+        </div>
+        <nav className="sidebar-nav">
+          <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
+            <span>📋</span> 체크리스트
+          </div>
+          <div className={"sidebar-nav-item" + (view === 'yearly' ? " active" : "")} onClick={() => setView('yearly')}>
+            <span>📅</span> 연도별 기록
+          </div>
+          <div className={"sidebar-nav-item" + (view === 'lawsearch' ? " active" : "")} onClick={() => setView('lawsearch')}>
+            <span>⚖️</span> 법령검색
+          </div>
+          <div className={"sidebar-nav-item" + (view === 'templates' ? " active" : "")} onClick={() => setView('templates')}>
+            <span>📁</span> 양식함
+          </div>
+        </nav>
+        <div className="sidebar-footer">
+          <div className="sidebar-user-email">{userEmail}</div>
+          <button className="sidebar-logout-btn" onClick={handleLogout}>로그아웃</button>
+        </div>
+      </aside>
+
+      <main className="main-content">
+        <div className="content-inner">
       <div className="masthead">
         <div>
           <h1>안전보건 통합관리시스템</h1>
@@ -726,21 +748,6 @@ export default function Dashboard() {
       <div className="stripe"></div>
 
       {error && <div className="disclaimer">{error}</div>}
-
-      <div className="tabs-primary">
-        <div className={"tab-primary" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
-          체크리스트
-        </div>
-        <div className={"tab-primary" + (view === 'yearly' ? " active" : "")} onClick={() => setView('yearly')}>
-          연도별 기록
-        </div>
-        <div className={"tab-primary" + (view === 'lawsearch' ? " active" : "")} onClick={() => setView('lawsearch')}>
-          법령검색
-        </div>
-        <div className={"tab-primary" + (view === 'templates' ? " active" : "")} onClick={() => setView('templates')}>
-          양식함
-        </div>
-      </div>
 
       {view === 'checklist' && (
         <>
@@ -1076,6 +1083,8 @@ export default function Dashboard() {
       <div className="footer-note">
         모든 데이터는 내 계정으로 클라우드에 저장되어 어느 기기에서 로그인해도 동일하게 보입니다.
       </div>
+        </div>
+      </main>
     </div>
   );
 }

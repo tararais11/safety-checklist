@@ -425,6 +425,11 @@ export default function Dashboard() {
 
   const [userEmail, setUserEmail] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [settingsMsg, setSettingsMsg] = useState(null);
+  const [settingsBusy, setSettingsBusy] = useState(false);
   const [items, setItems] = useState([]);
   const [doneMap, setDoneMap] = useState({}); // itemId -> Set of cycleKeys done
   const [fileMap, setFileMap] = useState({}); // itemId -> { cycleKey: {path, name} }
@@ -715,6 +720,29 @@ export default function Dashboard() {
     router.refresh();
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setSettingsMsg(null);
+    if (newPassword.length < 6) {
+      setSettingsMsg({ type: 'error', text: '비밀번호는 6자 이상이어야 해요.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setSettingsMsg({ type: 'error', text: '비밀번호가 서로 일치하지 않아요.' });
+      return;
+    }
+    setSettingsBusy(true);
+    const { error: pwErr } = await supabase.auth.updateUser({ password: newPassword });
+    setSettingsBusy(false);
+    if (pwErr) {
+      setSettingsMsg({ type: 'error', text: '변경 실패: ' + pwErr.message });
+      return;
+    }
+    setSettingsMsg({ type: 'success', text: '비밀번호가 변경되었어요.' });
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
   if (loading) return <div className="app-shell"><div className="main-content"><div className="content-inner"><div className="empty">불러오는 중...</div></div></div></div>;
 
   const periodItems = items
@@ -740,9 +768,59 @@ export default function Dashboard() {
         </div>
         <div className="topbar-global-right">
           <span className="topbar-global-email">{userEmail}</span>
+          <button
+            className="topbar-global-logout"
+            style={{background:'transparent', color:'var(--muted)', border:'1px solid var(--line)', fontSize:15, padding:'6px 10px'}}
+            onClick={() => { setShowSettings(true); setSettingsMsg(null); }}
+            title="개인 설정"
+          >
+            ⚙️
+          </button>
           <button className="topbar-global-logout" onClick={handleLogout}>로그아웃</button>
         </div>
       </div>
+
+      {showSettings && (
+        <div
+          style={{
+            position:'fixed', inset:0, background:'rgba(28,34,48,0.45)',
+            display:'flex', alignItems:'center', justifyContent:'center', zIndex:100,
+          }}
+          onClick={() => setShowSettings(false)}
+        >
+          <div
+            className="auth-card"
+            style={{maxWidth:380, margin:0, boxShadow:'0 20px 50px rgba(0,0,0,0.3)'}}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="auth-logo" style={{textAlign:'left'}}>개인 설정</div>
+            <div className="auth-sub" style={{textAlign:'left'}}>{userEmail}</div>
+
+            <form onSubmit={handleChangePassword}>
+              <div className="auth-field">
+                <label>새 비밀번호</label>
+                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={6} />
+              </div>
+              <div className="auth-field">
+                <label>새 비밀번호 확인</label>
+                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required minLength={6} />
+              </div>
+              <button className="auth-submit" type="submit" disabled={settingsBusy}>
+                {settingsBusy ? '변경 중...' : '비밀번호 변경'}
+              </button>
+            </form>
+
+            {settingsMsg && <div className={"auth-msg " + settingsMsg.type}>{settingsMsg.text}</div>}
+
+            <button
+              onClick={() => setShowSettings(false)}
+              style={{width:'100%', marginTop:14, padding:9, background:'none', border:'1px solid var(--line)', borderRadius:5, color:'var(--muted)', fontSize:13, fontWeight:600, cursor:'pointer'}}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="app-body">
       <aside className="sidebar">

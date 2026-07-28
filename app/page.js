@@ -720,6 +720,17 @@ export default function Dashboard() {
     router.refresh();
   };
 
+  const goToAdminOnlyView = async (targetView) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    if (profile?.role !== 'admin') {
+      alert('관리자 권한이 해제되어 더 이상 접근할 수 없어요. 화면을 새로고침할게요.');
+      window.location.reload();
+      return;
+    }
+    setView(targetView);
+  };
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setSettingsMsg(null);
@@ -827,10 +838,10 @@ export default function Dashboard() {
         <nav>
           {isAdmin && (
             <>
-              <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
+              <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => goToAdminOnlyView('checklist')}>
                 <span>📋</span> 체크리스트
               </div>
-              <div className={"sidebar-nav-item" + (view === 'yearly' ? " active" : "")} onClick={() => setView('yearly')}>
+              <div className={"sidebar-nav-item" + (view === 'yearly' ? " active" : "")} onClick={() => goToAdminOnlyView('yearly')}>
                 <span>📅</span> 연도별 기록
               </div>
             </>

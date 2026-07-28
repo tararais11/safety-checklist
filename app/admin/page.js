@@ -13,11 +13,13 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push('/login'); return; }
+    setCurrentUserId(user.id);
 
     const { data: me } = await supabase.from('profiles').select('role').eq('id', user.id).single();
     if (me?.role !== 'admin') { setIsAdmin(false); setLoading(false); return; }
@@ -52,6 +54,30 @@ export default function AdminPage() {
     const { error: err } = await supabase.from('profiles').update({ role: 'admin' }).eq('id', id);
     if (err) { setError(err.message); return; }
     setProfiles(prev => prev.map(p => p.id === id ? { ...p, role: 'admin' } : p));
+  };
+
+  const demoteAdmin = async (id) => {
+    if (!confirm('이 사용자의 관리자 권한을 해제할까요? 일반 사용자로 바뀌어요.')) return;
+    const { error: err } = await supabase.from('profiles').update({ role: 'user' }).eq('id', id);
+    if (err) { setError(err.message); return; }
+    setProfiles(prev => prev.map(p => p.id === id ? { ...p, role: 'user' } : p));
+  };
+
+  const deleteUserCompletely = async (id, email) => {
+    if (!confirm(`"${email}" 계정을 완전히 삭제할까요?\n이 작업은 되돌릴 수 없고, 이 사용자의 모든 데이터(체크리스트, 첨부파일 등)도 함께 삭제돼요.`)) return;
+    setError(null);
+    try {
+      const res = await fetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: id }),
+      });
+      const result = await res.json();
+      if (!res.ok) { setError('삭제 실패: ' + result.error); return; }
+      setProfiles(prev => prev.filter(p => p.id !== id));
+    } catch (e) {
+      setError('삭제 중 오류가 발생했어요: ' + e.message);
+    }
   };
 
   if (loading) return <div className="wrap"><div className="empty">불러오는 중...</div></div>;
@@ -93,6 +119,7 @@ export default function AdminPage() {
             </div>
             <div className="item-actions">
               <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => approveUser(p.id)}>승인</button>
+              <button className="icon-btn" style={{color:'var(--warn)'}} onClick={() => deleteUserCompletely(p.id, p.email)}>거절(삭제)</button>
             </div>
           </div>
         ))}
@@ -112,10 +139,15 @@ export default function AdminPage() {
               <div className="item-meta">가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}</div>
             </div>
             <div className="item-actions">
-              {p.role !== 'admin' && (
+              {p.role === 'admin' ? (
+                p.id !== currentUserId && (
+                  <button className="icon-btn" onClick={() => demoteAdmin(p.id)}>관리자 해제</button>
+                )
+              ) : (
                 <>
                   <button className="icon-btn" onClick={() => makeAdmin(p.id)}>관리자로 지정</button>
                   <button className="icon-btn" onClick={() => revokeUser(p.id)}>승인 취소</button>
+                  <button className="icon-btn" style={{color:'var(--warn)'}} onClick={() => deleteUserCompletely(p.id, p.email)}>완전 탈퇴</button>
                 </>
               )}
             </div>

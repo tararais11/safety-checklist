@@ -50,6 +50,8 @@ body{
 .sidebar{
   width:220px;flex-shrink:0;background:var(--ink);color:#fff;
   padding:16px 12px;
+  position:sticky;top:58px;align-self:flex-start;
+  height:calc(100vh - 58px);overflow-y:auto;
 }
 .sidebar-nav-item{
   display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:6px;
@@ -67,7 +69,7 @@ body{
   .topbar-global{padding:0 14px;}
   .topbar-global-brand{font-size:15px;}
   .topbar-global-email{display:none;}
-  .sidebar{width:100%;display:flex;gap:6px;padding:10px 12px;overflow-x:auto;}
+  .sidebar{width:100%;display:flex;gap:6px;padding:10px 12px;overflow-x:auto;position:sticky;top:58px;height:auto;z-index:15;}
   .sidebar-nav-item{white-space:nowrap;margin-bottom:0;border-left:none;border-bottom:3px solid transparent;}
   .sidebar-nav-item.active{border-left:none;border-bottom-color:var(--safety);}
   .content-inner{padding:22px 16px 40px;}

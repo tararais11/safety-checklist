@@ -25,20 +25,24 @@ body{
 /* 앱 쉘: 사이드바 + 본문 레이아웃 */
 .app-shell{display:flex;min-height:100vh;}
 .sidebar{
-  width:250px;flex-shrink:0;background:var(--ink);color:#fff;
-  display:flex;flex-direction:column;padding:26px 0;position:sticky;top:0;height:100vh;
+  width:264px;flex-shrink:0;background:var(--ink);color:#fff;
+  display:flex;flex-direction:column;padding:0;position:sticky;top:0;height:100vh;
 }
-.sidebar-brand{padding:0 22px 22px;border-bottom:1px solid rgba(255,255,255,0.12);margin-bottom:18px;}
-.sidebar-brand-tag{font-size:10px;letter-spacing:0.16em;color:#f4dcc9;margin-bottom:8px;text-transform:uppercase;font-weight:700;}
-.sidebar-brand-title{font-size:17px;font-weight:800;line-height:1.35;}
-.sidebar-nav{flex:1;padding:0 12px;}
+.sidebar-brand{
+  padding:22px 20px;border-bottom:2px solid rgba(255,255,255,0.14);
+  background:rgba(0,0,0,0.18);
+}
+.sidebar-brand-tag{font-size:10px;letter-spacing:0.16em;color:#f4dcc9;margin-bottom:6px;text-transform:uppercase;font-weight:700;}
+.sidebar-brand-title{font-size:15px;font-weight:800;line-height:1.3;white-space:nowrap;}
+.sidebar-nav{flex:1;padding:18px 12px;}
+.sidebar-nav-label{font-size:10.5px;letter-spacing:0.1em;color:#6f7684;text-transform:uppercase;font-weight:700;padding:0 10px;margin-bottom:8px;}
 .sidebar-nav-item{
   display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:6px;
   color:#c7cbd6;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:4px;transition:all .15s;
 }
 .sidebar-nav-item:hover{background:rgba(255,255,255,0.07);color:#fff;}
 .sidebar-nav-item.active{background:var(--safety);color:#fff;}
-.sidebar-footer{padding:16px 22px 0;border-top:1px solid rgba(255,255,255,0.12);margin-top:14px;}
+.sidebar-footer{padding:16px 22px 20px;border-top:2px solid rgba(255,255,255,0.14);background:rgba(0,0,0,0.18);}
 .sidebar-user-email{font-size:11.5px;color:#9aa0ae;margin-bottom:10px;word-break:break-all;}
 .sidebar-logout-btn{width:100%;padding:9px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.18);border-radius:5px;font-size:12.5px;font-weight:700;cursor:pointer;}
 .sidebar-logout-btn:hover{background:rgba(255,255,255,0.16);}

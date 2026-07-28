@@ -6,6 +6,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabase/client';
 
+const VIEW_TITLES = {
+  checklist: '체크리스트',
+  yearly: '연도별 기록',
+  lawsearch: '법령검색',
+  templates: '양식함',
+};
+
 const PERIODS = [
   { key: 'daily', label: '일일', unit: '매일' },
   { key: 'weekly', label: '주간', unit: '매주' },
@@ -741,7 +748,7 @@ export default function Dashboard() {
         <div className="content-inner">
       <div className="masthead">
         <div>
-          <h1>안전보건 통합관리시스템</h1>
+          <h1>{VIEW_TITLES[view] || '안전보건 통합관리시스템'}</h1>
           <div className="sub">산업안전보건법 · 중대재해처벌법 대응 — 일일/주간/월간/분기/반기/연간 이행 관리</div>
         </div>
       </div>

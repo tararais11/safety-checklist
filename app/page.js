@@ -722,9 +722,10 @@ export default function Dashboard() {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <div className="sidebar-brand-tag">SAFETY &amp; HEALTH</div>
-          <div className="sidebar-brand-title">안전보건<br/>통합관리시스템</div>
+          <div className="sidebar-brand-title">안전보건 통합관리시스템</div>
         </div>
         <nav className="sidebar-nav">
+          <div className="sidebar-nav-label">메뉴</div>
           <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => setView('checklist')}>
             <span>📋</span> 체크리스트
           </div>

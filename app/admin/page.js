@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
+import AdminShell from '../components/AdminShell';
 
 export default function AdminPage() {
   const supabase = createClient();
@@ -82,13 +83,13 @@ export default function AdminPage() {
     }
   };
 
-  if (loading) return <div className="wrap"><div className="empty">불러오는 중...</div></div>;
+  if (loading) return <AdminShell active="users"><div className="empty">불러오는 중...</div></AdminShell>;
 
   if (!isAdmin) {
     return (
-      <div className="wrap">
+      <AdminShell active="users">
         <div className="disclaimer">관리자만 접근할 수 있는 페이지예요.</div>
-      </div>
+      </AdminShell>
     );
   }
 
@@ -96,7 +97,7 @@ export default function AdminPage() {
   const approved = profiles.filter(p => p.approved);
 
   return (
-    <div className="wrap">
+    <AdminShell active="users">
       <div className="masthead">
         <div>
           <h1>관리자 페이지</h1>
@@ -171,6 +172,6 @@ export default function AdminPage() {
           </div>
         ))}
       </div>
-    </div>
+    </AdminShell>
   );
 }

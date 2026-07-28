@@ -15,6 +15,8 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
 
+  const [roleChoices, setRoleChoices] = useState({});
+
   const load = useCallback(async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -36,10 +38,10 @@ export default function AdminPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const approveUser = async (id) => {
-    const { error: err } = await supabase.from('profiles').update({ approved: true }).eq('id', id);
+  const approveUser = async (id, role) => {
+    const { error: err } = await supabase.from('profiles').update({ approved: true, role }).eq('id', id);
     if (err) { setError(err.message); return; }
-    setProfiles(prev => prev.map(p => p.id === id ? { ...p, approved: true } : p));
+    setProfiles(prev => prev.map(p => p.id === id ? { ...p, approved: true, role } : p));
   };
 
   const revokeUser = async (id) => {
@@ -111,18 +113,32 @@ export default function AdminPage() {
           <div className="cycle-label">{pending.length}명</div>
         </div>
         {pending.length === 0 && <div className="empty">대기 중인 가입 신청이 없어요.</div>}
-        {pending.map(p => (
+        {pending.map(p => {
+          const chosenRole = roleChoices[p.id] || (p.company_name ? 'vendor' : 'user');
+          return (
           <div className="item" key={p.id}>
             <div className="item-body">
               <div className="item-name">{p.email}</div>
-              <div className="item-meta">가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}</div>
+              <div className="item-meta">
+                가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}
+                {p.company_name && <span style={{marginLeft:8}}>· 회사명: {p.company_name}</span>}
+              </div>
             </div>
             <div className="item-actions">
-              <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => approveUser(p.id)}>승인</button>
+              <select
+                value={chosenRole}
+                onChange={e => setRoleChoices(prev => ({ ...prev, [p.id]: e.target.value }))}
+                style={{padding:'6px 8px', border:'1px solid var(--line)', borderRadius:4, fontSize:12.5}}
+              >
+                <option value="user">일반 사용자</option>
+                <option value="vendor">협력업체</option>
+              </select>
+              <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => approveUser(p.id, chosenRole)}>승인</button>
               <button className="icon-btn" style={{color:'var(--warn)'}} onClick={() => deleteUserCompletely(p.id, p.email)}>거절(삭제)</button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="panel">
@@ -134,7 +150,8 @@ export default function AdminPage() {
           <div className="item" key={p.id}>
             <div className="item-body">
               <div className="item-name">
-                {p.email} {p.role === 'admin' && <span className="badge ok">관리자</span>}
+                {p.email} {p.role === 'admin' && <span className="badge ok">관리자</span>} {p.role === 'vendor' && <span className="badge warn">협력업체</span>}
+                {p.company_name && <span style={{marginLeft:8, color:'var(--muted)', fontWeight:400}}>({p.company_name})</span>}
               </div>
               <div className="item-meta">가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}</div>
             </div>

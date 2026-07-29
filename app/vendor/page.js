@@ -127,6 +127,7 @@ export default function VendorPage() {
     <div className="app-shell">
       <div className="topbar-global">
         <div className="topbar-global-brand">
+          <img src="/logo.gif" alt="회사 로고" style={{height:38, marginRight:4}} />
           <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
         </div>
         <div className="topbar-global-right">

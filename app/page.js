@@ -867,9 +867,6 @@ export default function Dashboard() {
           </div>
           {isAdmin && (
             <>
-              <div className={"sidebar-nav-item" + (view === 'adminUsers' ? " active" : "")} onClick={() => goToAdminOnlyView('adminUsers')}>
-                <span>🛡️</span> 회원 관리
-              </div>
               <div className={"sidebar-nav-item" + (view === 'evalCreate' ? " active" : "")} onClick={() => goToAdminOnlyView('evalCreate')}>
                 <span>🏗️</span> 평가생성
               </div>
@@ -879,6 +876,13 @@ export default function Dashboard() {
             </>
           )}
         </nav>
+        {isAdmin && (
+          <div className="sidebar-footer-menu">
+            <div className={"sidebar-nav-item" + (view === 'adminUsers' ? " active" : "")} onClick={() => goToAdminOnlyView('adminUsers')}>
+              <span>🛡️</span> 회원 관리
+            </div>
+          </div>
+        )}
       </aside>
 
       <main className="main-content">

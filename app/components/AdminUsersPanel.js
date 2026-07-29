@@ -11,7 +11,7 @@ export default function AdminUsersPanel() {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [roleChoices, setRoleChoices] = useState({});
   const [editingId, setEditingId] = useState(null);
-  const [editDraft, setEditDraft] = useState({ full_name: '', company_name: '' });
+  const [editDraft, setEditDraft] = useState({ full_name: '', company_name: '', position: '' });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,9 +74,15 @@ export default function AdminUsersPanel() {
     }
   };
 
+  const changeRole = async (id, role) => {
+    const { error: err } = await supabase.from('profiles').update({ role }).eq('id', id);
+    if (err) { setError(err.message); return; }
+    setProfiles(prev => prev.map(p => p.id === id ? { ...p, role } : p));
+  };
+
   const startEdit = (p) => {
     setEditingId(p.id);
-    setEditDraft({ full_name: p.full_name || '', company_name: p.company_name || '' });
+    setEditDraft({ full_name: p.full_name || '', company_name: p.company_name || '', position: p.position || '' });
   };
 
   const cancelEdit = () => setEditingId(null);
@@ -84,10 +90,10 @@ export default function AdminUsersPanel() {
   const saveEdit = async (id) => {
     const { error: err } = await supabase
       .from('profiles')
-      .update({ full_name: editDraft.full_name || null, company_name: editDraft.company_name || null })
+      .update({ full_name: editDraft.full_name || null, company_name: editDraft.company_name || null, position: editDraft.position || null })
       .eq('id', id);
     if (err) { setError(err.message); return; }
-    setProfiles(prev => prev.map(p => p.id === id ? { ...p, full_name: editDraft.full_name || null, company_name: editDraft.company_name || null } : p));
+    setProfiles(prev => prev.map(p => p.id === id ? { ...p, full_name: editDraft.full_name || null, company_name: editDraft.company_name || null, position: editDraft.position || null } : p));
     setEditingId(null);
   };
 
@@ -114,6 +120,7 @@ export default function AdminUsersPanel() {
                 <div className="item-name">{p.full_name ? `${p.full_name} (${p.email})` : p.email}</div>
                 <div className="item-meta">
                   가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}
+                  {p.position && <span style={{marginLeft:8}}>· 직책: {p.position}</span>}
                   {p.company_name && <span style={{marginLeft:8}}>· 회사명: {p.company_name}</span>}
                 </div>
               </div>
@@ -150,6 +157,18 @@ export default function AdminUsersPanel() {
                     onChange={e => setEditDraft(prev => ({ ...prev, full_name: e.target.value }))}
                     style={{flex:1, minWidth:140, padding:'8px 10px', border:'1px solid var(--line)', borderRadius:4, fontSize:13}}
                   />
+                  <select
+                    value={editDraft.position}
+                    onChange={e => setEditDraft(prev => ({ ...prev, position: e.target.value }))}
+                    style={{flex:1, minWidth:160, padding:'8px 10px', border:'1px solid var(--line)', borderRadius:4, fontSize:13}}
+                  >
+                    <option value="">직책 선택 안 함</option>
+                    <option value="현장소장">현장소장</option>
+                    <option value="안전보건관리책임자">안전보건관리책임자</option>
+                    <option value="안전관리자">안전관리자</option>
+                    <option value="관리감독자">관리감독자</option>
+                    <option value="안전보건관리담당자">안전보건관리담당자</option>
+                  </select>
                   <input
                     placeholder="회사명 (협력업체인 경우)"
                     value={editDraft.company_name}
@@ -169,16 +188,27 @@ export default function AdminUsersPanel() {
                     {p.full_name ? `${p.full_name} (${p.email})` : p.email} {p.role === 'admin' && <span className="badge ok">관리자</span>} {p.role === 'vendor' && <span className="badge warn">협력업체</span>}
                     {p.company_name && <span style={{marginLeft:8, color:'var(--muted)', fontWeight:400}}>({p.company_name})</span>}
                   </div>
-                  <div className="item-meta">가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}</div>
+                  <div className="item-meta">
+                    가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}
+                    {p.position && <span style={{marginLeft:8}}>· 직책: {p.position}</span>}
+                  </div>
                 </div>
                 <div className="item-actions">
-                  <button className="icon-btn" onClick={() => startEdit(p)}>이름/회사명 수정</button>
+                  <button className="icon-btn" onClick={() => startEdit(p)}>이름/직책/회사명 수정</button>
                   {p.role === 'admin' ? (
                     p.id !== currentUserId && (
                       <button className="icon-btn" onClick={() => demoteAdmin(p.id)}>관리자 해제</button>
                     )
                   ) : (
                     <>
+                      <select
+                        value={p.role}
+                        onChange={e => changeRole(p.id, e.target.value)}
+                        style={{padding:'6px 8px', border:'1px solid var(--line)', borderRadius:4, fontSize:12.5}}
+                      >
+                        <option value="user">일반 사용자</option>
+                        <option value="vendor">협력업체</option>
+                      </select>
                       <button className="icon-btn" onClick={() => makeAdmin(p.id)}>관리자로 지정</button>
                       <button className="icon-btn" onClick={() => revokeUser(p.id)}>승인 취소</button>
                       <button className="icon-btn" style={{color:'var(--warn)'}} onClick={() => deleteUserCompletely(p.id, p.email)}>완전 탈퇴</button>

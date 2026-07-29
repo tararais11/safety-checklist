@@ -5,12 +5,16 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../lib/supabase/client';
+import AdminUsersPanel from './components/AdminUsersPanel';
+import AdminEvaluationsPanel from './components/AdminEvaluationsPanel';
 
 const VIEW_TITLES = {
   checklist: '체크리스트',
   yearly: '연도별 기록',
   lawsearch: '법령검색',
   templates: '양식함',
+  adminUsers: '회원 관리',
+  adminEvaluations: '협력업체 평가',
 };
 
 const VIEW_ICONS = {
@@ -18,6 +22,8 @@ const VIEW_ICONS = {
   yearly: '📅',
   lawsearch: '⚖️',
   templates: '📁',
+  adminUsers: '🛡️',
+  adminEvaluations: '🏗️',
 };
 
 const PERIODS = [
@@ -854,10 +860,10 @@ export default function Dashboard() {
           </div>
           {isAdmin && (
             <>
-              <div className="sidebar-nav-item" onClick={() => router.push('/admin')}>
-                <span>🛡️</span> 관리자
+              <div className={"sidebar-nav-item" + (view === 'adminUsers' ? " active" : "")} onClick={() => goToAdminOnlyView('adminUsers')}>
+                <span>🛡️</span> 회원 관리
               </div>
-              <div className="sidebar-nav-item" onClick={() => router.push('/admin/evaluations')}>
+              <div className={"sidebar-nav-item" + (view === 'adminEvaluations' ? " active" : "")} onClick={() => goToAdminOnlyView('adminEvaluations')}>
                 <span>🏗️</span> 협력업체 평가
               </div>
             </>
@@ -1207,6 +1213,9 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+
+      {view === 'adminUsers' && isAdmin && <AdminUsersPanel />}
+      {view === 'adminEvaluations' && isAdmin && <AdminEvaluationsPanel />}
 
       <div className="footer-note">
         모든 데이터는 내 계정으로 클라우드에 저장되어 어느 기기에서 로그인해도 동일하게 보입니다.

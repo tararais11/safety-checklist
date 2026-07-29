@@ -7,7 +7,7 @@
 
 ## 1. 준비물 (전부 무료 가입)
 
-1. [GitHub](https://github.com) 계정
+1. [GitHub](https://github.com) 계정 
 2. [Supabase](https://supabase.com) 계정 (GitHub로 바로 가입 가능)
 3. [Vercel](https://vercel.com) 계정 (GitHub로 바로 가입 가능)
 4. 컴퓨터에 [Node.js](https://nodejs.org) 설치 (LTS 버전) — 로컬에서 미리 테스트해보고 싶을 때만 필요, 바로 배포만 할 거면 생략 가능

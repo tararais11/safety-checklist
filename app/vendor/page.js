@@ -6,6 +6,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 
+const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
+
 export default function VendorPage() {
   const supabase = createClient();
   const router = useRouter();
@@ -15,6 +17,8 @@ export default function VendorPage() {
   const [userEmail, setUserEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [evaluations, setEvaluations] = useState([]);
+
+  const [view, setView] = useState('inprogress'); // 'inprogress' | 'results'
   const [openEval, setOpenEval] = useState(null);
   const [rows, setRows] = useState([]);
   const [signedUrls, setSignedUrls] = useState({});
@@ -111,97 +115,125 @@ export default function VendorPage() {
     alert('제출이 완료되었어요.');
   };
 
-  if (loading) return <div className="wrap"><div className="empty">불러오는 중...</div></div>;
+  if (loading) return <div className="app-shell"><div className="main-content"><div className="content-inner"><div className="empty">불러오는 중...</div></div></div></div>;
 
-  const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
-
-  if (openEval) {
-    return (
-      <div className="wrap">
-        <div className="topbar">
-          <span>{companyName || userEmail}</span>
-          <button className="logout-btn" onClick={handleLogout}>로그아웃</button>
-        </div>
-        <div className="masthead">
-          <div>
-            <h1>{openEval.eval_templates?.title}</h1>
-            <div className="sub">{openEval.eval_templates?.legal_basis}</div>
-          </div>
-        </div>
-        <div className="stripe"></div>
-
-        {error && <div className="disclaimer">{error}</div>}
-        {openEval.eval_templates?.notes && <div className="disclaimer">{openEval.eval_templates.notes}</div>}
-
-        <button className="icon-btn" style={{marginBottom:14}} onClick={() => setOpenEval(null)}>← 목록으로</button>
-
-        <div className="panel">
-          <div className="panel-head">
-            <h2>평가 항목</h2>
-            <div className="cycle-label">{statusLabel[openEval.status]}</div>
-          </div>
-          {rows.map(row => (
-            <EvalRow
-              key={row.criterion.id}
-              row={row}
-              uploading={uploadingId === row.criterion.id}
-              onUpload={file => uploadEvidence(row.criterion, file)}
-              getSignedUrl={getSignedUrl}
-              signedUrls={signedUrls}
-            />
-          ))}
-          {openEval.status !== 'reviewed' && (
-            <div style={{marginTop:16}}>
-              <button className="auth-submit" style={{width:'auto', padding:'11px 24px'}} onClick={submitEvaluation}>
-                제출하기
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const inProgressEvals = evaluations.filter(e => e.status !== 'reviewed');
+  const resultEvals = evaluations.filter(e => e.status === 'reviewed');
+  const listToShow = view === 'inprogress' ? inProgressEvals : resultEvals;
 
   return (
-    <div className="wrap">
-      <div className="topbar">
-        <span>{companyName || userEmail}</span>
-        <button className="logout-btn" onClick={handleLogout}>로그아웃</button>
-      </div>
-      <div className="tag">SAFETY &amp; HEALTH COMPLIANCE</div>
-      <div className="masthead">
-        <div>
-          <h1>협력업체 평가</h1>
-          <div className="sub">배정된 안전보건 평가에 자료를 제출하세요</div>
+    <div className="app-shell">
+      <div className="topbar-global">
+        <div className="topbar-global-brand">
+          <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
+        </div>
+        <div className="topbar-global-right">
+          <span className="topbar-global-email">{companyName || userEmail}</span>
+          <button className="topbar-global-logout" onClick={handleLogout}>로그아웃</button>
         </div>
       </div>
-      <div className="stripe"></div>
 
-      {error && <div className="disclaimer">{error}</div>}
+      <div className="app-body">
+        <aside className="sidebar">
+          <nav>
+            <div className={"sidebar-nav-item" + (view === 'inprogress' && !openEval ? " active" : "")} onClick={() => { setView('inprogress'); setOpenEval(null); }}>
+              <span>📝</span> 평가진행
+            </div>
+            <div className={"sidebar-nav-item" + (view === 'results' && !openEval ? " active" : "")} onClick={() => { setView('results'); setOpenEval(null); }}>
+              <span>📊</span> 평가결과
+            </div>
+          </nav>
+        </aside>
 
-      <div className="panel">
-        <div className="panel-head"><h2>내 평가 목록</h2></div>
-        {evaluations.length === 0 && <div className="empty">아직 배정된 평가가 없어요.</div>}
-        {evaluations.map(ev => (
-          <div className="item" key={ev.id} style={{cursor:'pointer'}} onClick={() => openEvaluation(ev)}>
-            <div className="item-body">
-              <div className="item-name">{ev.eval_templates?.title}</div>
-              <div className="item-meta">
-                {ev.period_start} ~ {ev.period_end}
-                <span className={"badge " + (ev.status === 'reviewed' ? 'ok' : 'warn')} style={{marginLeft:8}}>{statusLabel[ev.status]}</span>
-              </div>
-            </div>
-            <div className="item-actions">
-              <span className="icon-btn">열기 →</span>
-            </div>
+        <main className="main-content">
+          <div className="content-inner">
+            {error && <div className="disclaimer">{error}</div>}
+
+            {openEval ? (
+              <>
+                <div className="masthead">
+                  <div>
+                    <h1>{openEval.eval_templates?.title}</h1>
+                    <div className="sub">{openEval.eval_templates?.legal_basis}</div>
+                  </div>
+                </div>
+                <div className="stripe"></div>
+
+                {openEval.eval_templates?.notes && <div className="disclaimer">{openEval.eval_templates.notes}</div>}
+
+                <button className="icon-btn" style={{marginBottom:14}} onClick={() => setOpenEval(null)}>← 목록으로</button>
+
+                <div className="panel">
+                  <div className="panel-head">
+                    <h2>평가 항목</h2>
+                    <div className="cycle-label">{statusLabel[openEval.status]}</div>
+                  </div>
+                  {rows.map(row => (
+                    <EvalRow
+                      key={row.criterion.id}
+                      row={row}
+                      readOnly={openEval.status === 'reviewed'}
+                      uploading={uploadingId === row.criterion.id}
+                      onUpload={file => uploadEvidence(row.criterion, file)}
+                      getSignedUrl={getSignedUrl}
+                    />
+                  ))}
+                  {openEval.status !== 'reviewed' && (
+                    <div style={{marginTop:16}}>
+                      <button className="auth-submit" style={{width:'auto', padding:'11px 24px'}} onClick={submitEvaluation}>
+                        제출하기
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="masthead">
+                  <div>
+                    <h1>{view === 'inprogress' ? '평가진행' : '평가결과'}</h1>
+                    <div className="sub">
+                      {view === 'inprogress' ? '배정된 평가에 증빙자료를 제출하세요' : '검토가 완료된 평가 결과를 확인하세요'}
+                    </div>
+                  </div>
+                </div>
+                <div className="stripe"></div>
+
+                <div className="panel">
+                  <div className="panel-head">
+                    <h2>{view === 'inprogress' ? '진행 중인 평가' : '완료된 평가'}</h2>
+                    <div className="cycle-label">{listToShow.length}건</div>
+                  </div>
+                  {listToShow.length === 0 && (
+                    <div className="empty">
+                      {view === 'inprogress' ? '진행 중인 평가가 없어요.' : '아직 완료된 평가가 없어요.'}
+                    </div>
+                  )}
+                  {listToShow.map(ev => (
+                    <div className="item" key={ev.id} style={{cursor:'pointer'}} onClick={() => openEvaluation(ev)}>
+                      <div className="item-body">
+                        <div className="item-name">{ev.eval_templates?.title}</div>
+                        <div className="item-meta">
+                          {ev.period_start} ~ {ev.period_end}
+                          <span className={"badge " + (ev.status === 'reviewed' ? 'ok' : 'warn')} style={{marginLeft:8}}>{statusLabel[ev.status]}</span>
+                        </div>
+                      </div>
+                      <div className="item-actions">
+                        <span className="icon-btn">열기 →</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-        ))}
+        </main>
       </div>
     </div>
   );
 }
 
-function EvalRow({ row, uploading, onUpload, getSignedUrl, signedUrls }) {
+function EvalRow({ row, readOnly, uploading, onUpload, getSignedUrl }) {
   const [url, setUrl] = useState(null);
   const path = row.response?.file_url;
 
@@ -226,11 +258,13 @@ function EvalRow({ row, uploading, onUpload, getSignedUrl, signedUrls }) {
         ) : (
           <div style={{fontSize:12.5, color:'var(--muted)'}}>증빙자료 없음</div>
         )}
-        <label className="add-btn" style={{cursor:'pointer', display:'inline-block', fontSize:12, marginTop:8}}>
-          {uploading ? '업로드 중...' : (path ? '파일 교체' : '증빙자료 첨부')}
-          <input type="file" accept="application/pdf,image/*" style={{display:'none'}}
-            onChange={e => e.target.files[0] && onUpload(e.target.files[0])} />
-        </label>
+        {!readOnly && (
+          <label className="add-btn" style={{cursor:'pointer', display:'inline-block', fontSize:12, marginTop:8}}>
+            {uploading ? '업로드 중...' : (path ? '파일 교체' : '증빙자료 첨부')}
+            <input type="file" accept="application/pdf,image/*" style={{display:'none'}}
+              onChange={e => e.target.files[0] && onUpload(e.target.files[0])} />
+          </label>
+        )}
       </div>
       {reviewed && (
         <div style={{marginTop:10, background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4, padding:'10px 12px', fontSize:12.5}}>

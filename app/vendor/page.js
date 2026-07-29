@@ -15,6 +15,7 @@ export default function VendorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userEmail, setUserEmail] = useState('');
+  const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [evaluations, setEvaluations] = useState([]);
 
@@ -30,8 +31,9 @@ export default function VendorPage() {
     if (!user) { router.push('/login'); return; }
     setUserEmail(user.email);
 
-    const { data: me } = await supabase.from('profiles').select('company_name').eq('id', user.id).single();
+    const { data: me } = await supabase.from('profiles').select('company_name, full_name').eq('id', user.id).single();
     setCompanyName(me?.company_name || '');
+    setFullName(me?.full_name || '');
 
     const { data: evs, error: err } = await supabase
       .from('evaluations')
@@ -128,7 +130,9 @@ export default function VendorPage() {
           <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
         </div>
         <div className="topbar-global-right">
-          <span className="topbar-global-email">{companyName || userEmail}</span>
+          <span className="topbar-global-email">
+            {fullName && companyName ? `${fullName}-${companyName}` : (fullName || companyName || userEmail)}
+          </span>
           <button className="topbar-global-logout" onClick={handleLogout}>로그아웃</button>
         </div>
       </div>

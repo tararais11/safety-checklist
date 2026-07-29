@@ -26,7 +26,9 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setMsg({ type: 'error', text: '로그인 실패: 이메일 또는 비밀번호를 확인해주세요.' });
+        setLoading(false);
       } else {
+        // 로딩 상태를 유지한 채로 페이지 이동 (버튼이 즉시 원상복구되지 않도록)
         router.push('/');
         router.refresh();
       }
@@ -46,12 +48,26 @@ export default function LoginPage() {
         setMsg({ type: 'success', text: '가입 신청이 접수되었어요. 관리자 승인 후 로그인할 수 있습니다.' });
         setMode('login');
       }
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div className="auth-wrap">
+      {loading && mode === 'login' && (
+        <div style={{
+          position:'fixed', inset:0, background:'rgba(28,34,48,0.55)',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+          zIndex:200, color:'#fff', gap:14,
+        }}>
+          <div style={{
+            width:40, height:40, border:'4px solid rgba(255,255,255,0.25)', borderTopColor:'#ff8a4c',
+            borderRadius:'50%', animation:'auth-spin 0.8s linear infinite',
+          }}></div>
+          <div style={{fontSize:14.5, fontWeight:700}}>로그인 중입니다...</div>
+        </div>
+      )}
+      <style>{`@keyframes auth-spin { to { transform: rotate(360deg); } }`}</style>
       <div className="auth-card">
         <div className="auth-logo">안전보건 통합관리시스템</div>
         <div className="auth-sub">산업안전보건법 · 중대재해처벌법 대응 관리</div>

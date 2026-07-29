@@ -433,6 +433,7 @@ export default function Dashboard() {
   const router = useRouter();
 
   const [userEmail, setUserEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -464,7 +465,8 @@ export default function Dashboard() {
     if (!user) { router.push('/login'); return; }
     setUserEmail(user.email);
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', user.id).single();
+    setDisplayName(profile?.full_name || '');
     const adminFlag = profile?.role === 'admin';
     setIsAdmin(adminFlag);
     if (!adminFlag) {
@@ -788,7 +790,7 @@ export default function Dashboard() {
           <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
         </div>
         <div className="topbar-global-right">
-          <span className="topbar-global-email">{userEmail}</span>
+          <span className="topbar-global-email">{displayName || userEmail}</span>
           <button
             className="topbar-global-logout"
             style={{padding:'7px 12px', fontSize:15}}

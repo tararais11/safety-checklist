@@ -70,6 +70,9 @@ export default function LoginPage() {
       )}
       <style>{`@keyframes auth-spin { to { transform: rotate(360deg); } }`}</style>
       <div className="auth-card">
+        <div style={{textAlign:'center', marginBottom:10}}>
+          <img src="/logo.gif" alt="회사 로고" style={{height:56}} />
+        </div>
         <div className="auth-logo">안전보건 통합관리시스템</div>
         <div className="auth-sub">산업안전보건법 · 중대재해처벌법 대응 관리</div>
 

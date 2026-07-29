@@ -26,15 +26,15 @@ body{
 .app-shell{display:flex;flex-direction:column;min-height:100vh;}
 
 .topbar-global{
-  height:58px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
-  padding:0 24px;background:#fff;border-bottom:1px solid var(--line);
+  height:74px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;background:#fff;border-bottom:1px solid var(--line);
   position:sticky;top:0;z-index:20;
 }
-.topbar-global-brand{font-size:18px;font-weight:800;color:var(--ink);display:flex;align-items:baseline;gap:2px;}
+.topbar-global-brand{font-size:25px;font-weight:800;color:var(--ink);display:flex;align-items:baseline;gap:3px;}
 .topbar-global-brand .accent{color:var(--safety);}
-.topbar-global-right{display:flex;align-items:center;gap:14px;}
-.topbar-global-email{font-size:12.5px;color:var(--muted);}
-.topbar-global-logout{padding:7px 14px;background:var(--ink);color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;}
+.topbar-global-right{display:flex;align-items:center;gap:16px;}
+.topbar-global-email{font-size:14px;color:var(--muted);}
+.topbar-global-logout{padding:9px 16px;background:var(--ink);color:#fff;border:none;border-radius:5px;font-size:13.5px;font-weight:700;cursor:pointer;}
 .topbar-global-logout:hover{background:var(--safety);}
 
 .tab-strip{
@@ -50,8 +50,8 @@ body{
 .sidebar{
   width:270px;flex-shrink:0;background:var(--ink);color:#fff;
   padding:16px 12px;
-  position:sticky;top:58px;align-self:flex-start;
-  height:calc(100vh - 58px);overflow-y:auto;
+  position:sticky;top:74px;align-self:flex-start;
+  height:calc(100vh - 74px);overflow-y:auto;
   display:flex;flex-direction:column;
 }
 .sidebar-nav-item{
@@ -72,7 +72,7 @@ body{
   .topbar-global{padding:0 14px;}
   .topbar-global-brand{font-size:15px;}
   .topbar-global-email{display:none;}
-  .sidebar{width:100%;flex-direction:row;gap:6px;padding:10px 12px;overflow-x:auto;position:sticky;top:58px;height:auto;z-index:15;}
+  .sidebar{width:100%;flex-direction:row;gap:6px;padding:10px 12px;overflow-x:auto;position:sticky;top:74px;height:auto;z-index:15;}
   .sidebar-nav-item{white-space:nowrap;margin-bottom:0;border-left:none;border-bottom:3px solid transparent;}
   .sidebar-nav-item.active{border-left:none;border-bottom-color:var(--safety);}
   .sidebar > nav{flex:none;display:flex;gap:6px;}

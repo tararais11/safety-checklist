@@ -212,6 +212,17 @@ export default function AdminEvaluationsPanel() {
                 </div>
               </div>
             ))}
+            <div style={{
+              display:'flex', justifyContent:'space-between', alignItems:'center',
+              borderTop:'2px solid var(--ink)', marginTop:8, padding:'10px 4px', fontWeight:800, fontSize:14,
+            }}>
+              <span>합계</span>
+              <span>
+                {reviewRows.reduce((sum, r) => sum + (r.response.review_score === '' || r.response.review_score == null ? 0 : Number(r.response.review_score)), 0)}
+                {' '}/{' '}
+                {reviewRows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0)}
+              </span>
+            </div>
             <div style={{display:'flex', gap:10, marginTop:16}}>
               <button className="add-btn" onClick={submitReview}>검토 결과 저장</button>
               <button className="icon-btn" onClick={() => setReviewEval(null)}>닫기</button>
@@ -241,7 +252,7 @@ export default function AdminEvaluationsPanel() {
               <div className="item" key={c.id}>
                 <div className="item-body">
                   <div className="item-name">{c.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>(배점 {c.max_score})</span></div>
-                  <div className="item-meta">{c.criteria_text}</div>
+                  <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{c.criteria_text}</div>
                 </div>
                 <div className="item-actions">
                   <button className="icon-btn" onClick={() => removeCriterion(t.id, c.id)}>✕</button>
@@ -249,18 +260,19 @@ export default function AdminEvaluationsPanel() {
               </div>
             ))}
 
-            <div className="add-row" style={{marginTop:10}}>
+            <div className="add-row" style={{marginTop:10, alignItems:'flex-start'}}>
               <input
                 placeholder="평가내용"
                 value={criterionDraft[t.id]?.content || ''}
                 onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], content: e.target.value } }))}
                 style={{flex:2}}
               />
-              <input
-                placeholder="평가기준 설명"
+              <textarea
+                placeholder="평가기준 설명 (줄바꿈 가능: 우수/보통/미흡 기준을 줄마다 나눠서 써보세요)"
                 value={criterionDraft[t.id]?.criteria_text || ''}
                 onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], criteria_text: e.target.value } }))}
-                style={{flex:2}}
+                rows={3}
+                style={{flex:2, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:3, fontSize:13.5, fontFamily:'inherit', background:'#fbfaf6', resize:'vertical'}}
               />
               <input
                 type="number" placeholder="배점"

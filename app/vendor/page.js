@@ -178,6 +178,19 @@ export default function VendorPage() {
                       getSignedUrl={getSignedUrl}
                     />
                   ))}
+                  {openEval.status === 'reviewed' && (
+                    <div style={{
+                      display:'flex', justifyContent:'space-between', alignItems:'center',
+                      borderTop:'2px solid var(--ink)', marginTop:8, padding:'10px 4px', fontWeight:800, fontSize:14,
+                    }}>
+                      <span>합계</span>
+                      <span>
+                        {rows.reduce((sum, r) => sum + (r.response?.review_score == null ? 0 : Number(r.response.review_score)), 0)}
+                        {' '}/{' '}
+                        {rows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0)}
+                      </span>
+                    </div>
+                  )}
                   {openEval.status !== 'reviewed' && (
                     <div style={{marginTop:16}}>
                       <button className="auth-submit" style={{width:'auto', padding:'11px 24px'}} onClick={submitEvaluation}>
@@ -247,7 +260,7 @@ function EvalRow({ row, readOnly, uploading, onUpload, getSignedUrl }) {
     <div className="item" style={{flexDirection:'column', alignItems:'stretch'}}>
       <div className="item-body">
         <div className="item-name">{row.criterion.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>(배점 {row.criterion.max_score})</span></div>
-        <div className="item-meta">{row.criterion.criteria_text}</div>
+        <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{row.criterion.criteria_text}</div>
       </div>
       <div style={{marginTop:8}}>
         {path ? (

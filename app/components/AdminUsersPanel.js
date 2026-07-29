@@ -10,6 +10,8 @@ export default function AdminUsersPanel() {
   const [error, setError] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [roleChoices, setRoleChoices] = useState({});
+  const [editingId, setEditingId] = useState(null);
+  const [editDraft, setEditDraft] = useState({ full_name: '', company_name: '' });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,6 +74,23 @@ export default function AdminUsersPanel() {
     }
   };
 
+  const startEdit = (p) => {
+    setEditingId(p.id);
+    setEditDraft({ full_name: p.full_name || '', company_name: p.company_name || '' });
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = async (id) => {
+    const { error: err } = await supabase
+      .from('profiles')
+      .update({ full_name: editDraft.full_name || null, company_name: editDraft.company_name || null })
+      .eq('id', id);
+    if (err) { setError(err.message); return; }
+    setProfiles(prev => prev.map(p => p.id === id ? { ...p, full_name: editDraft.full_name || null, company_name: editDraft.company_name || null } : p));
+    setEditingId(null);
+  };
+
   if (loading) return <div className="empty">불러오는 중...</div>;
 
   const pending = profiles.filter(p => !p.approved);
@@ -121,27 +140,53 @@ export default function AdminUsersPanel() {
           <div className="cycle-label">{approved.length}명</div>
         </div>
         {approved.map(p => (
-          <div className="item" key={p.id}>
-            <div className="item-body">
-              <div className="item-name">
-                {p.full_name ? `${p.full_name} (${p.email})` : p.email} {p.role === 'admin' && <span className="badge ok">관리자</span>} {p.role === 'vendor' && <span className="badge warn">협력업체</span>}
-                {p.company_name && <span style={{marginLeft:8, color:'var(--muted)', fontWeight:400}}>({p.company_name})</span>}
+          <div className="item" key={p.id} style={{flexDirection: editingId === p.id ? 'column' : 'row', alignItems: editingId === p.id ? 'stretch' : 'center'}}>
+            {editingId === p.id ? (
+              <div style={{width:'100%'}}>
+                <div style={{display:'flex', gap:10, marginBottom:8, flexWrap:'wrap'}}>
+                  <input
+                    placeholder="이름"
+                    value={editDraft.full_name}
+                    onChange={e => setEditDraft(prev => ({ ...prev, full_name: e.target.value }))}
+                    style={{flex:1, minWidth:140, padding:'8px 10px', border:'1px solid var(--line)', borderRadius:4, fontSize:13}}
+                  />
+                  <input
+                    placeholder="회사명 (협력업체인 경우)"
+                    value={editDraft.company_name}
+                    onChange={e => setEditDraft(prev => ({ ...prev, company_name: e.target.value }))}
+                    style={{flex:1, minWidth:180, padding:'8px 10px', border:'1px solid var(--line)', borderRadius:4, fontSize:13}}
+                  />
+                </div>
+                <div style={{display:'flex', gap:8}}>
+                  <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => saveEdit(p.id)}>저장</button>
+                  <button className="icon-btn" onClick={cancelEdit}>취소</button>
+                </div>
               </div>
-              <div className="item-meta">가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}</div>
-            </div>
-            <div className="item-actions">
-              {p.role === 'admin' ? (
-                p.id !== currentUserId && (
-                  <button className="icon-btn" onClick={() => demoteAdmin(p.id)}>관리자 해제</button>
-                )
-              ) : (
-                <>
-                  <button className="icon-btn" onClick={() => makeAdmin(p.id)}>관리자로 지정</button>
-                  <button className="icon-btn" onClick={() => revokeUser(p.id)}>승인 취소</button>
-                  <button className="icon-btn" style={{color:'var(--warn)'}} onClick={() => deleteUserCompletely(p.id, p.email)}>완전 탈퇴</button>
-                </>
-              )}
-            </div>
+            ) : (
+              <>
+                <div className="item-body">
+                  <div className="item-name">
+                    {p.full_name ? `${p.full_name} (${p.email})` : p.email} {p.role === 'admin' && <span className="badge ok">관리자</span>} {p.role === 'vendor' && <span className="badge warn">협력업체</span>}
+                    {p.company_name && <span style={{marginLeft:8, color:'var(--muted)', fontWeight:400}}>({p.company_name})</span>}
+                  </div>
+                  <div className="item-meta">가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}</div>
+                </div>
+                <div className="item-actions">
+                  <button className="icon-btn" onClick={() => startEdit(p)}>이름/회사명 수정</button>
+                  {p.role === 'admin' ? (
+                    p.id !== currentUserId && (
+                      <button className="icon-btn" onClick={() => demoteAdmin(p.id)}>관리자 해제</button>
+                    )
+                  ) : (
+                    <>
+                      <button className="icon-btn" onClick={() => makeAdmin(p.id)}>관리자로 지정</button>
+                      <button className="icon-btn" onClick={() => revokeUser(p.id)}>승인 취소</button>
+                      <button className="icon-btn" style={{color:'var(--warn)'}} onClick={() => deleteUserCompletely(p.id, p.email)}>완전 탈퇴</button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         ))}
       </div>

@@ -92,7 +92,7 @@ export default function AdminUsersPanel() {
           return (
             <div className="item" key={p.id}>
               <div className="item-body">
-                <div className="item-name">{p.email}</div>
+                <div className="item-name">{p.full_name ? `${p.full_name} (${p.email})` : p.email}</div>
                 <div className="item-meta">
                   가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}
                   {p.company_name && <span style={{marginLeft:8}}>· 회사명: {p.company_name}</span>}
@@ -124,7 +124,7 @@ export default function AdminUsersPanel() {
           <div className="item" key={p.id}>
             <div className="item-body">
               <div className="item-name">
-                {p.email} {p.role === 'admin' && <span className="badge ok">관리자</span>} {p.role === 'vendor' && <span className="badge warn">협력업체</span>}
+                {p.full_name ? `${p.full_name} (${p.email})` : p.email} {p.role === 'admin' && <span className="badge ok">관리자</span>} {p.role === 'vendor' && <span className="badge warn">협력업체</span>}
                 {p.company_name && <span style={{marginLeft:8, color:'var(--muted)', fontWeight:400}}>({p.company_name})</span>}
               </div>
               <div className="item-meta">가입일: {new Date(p.created_at).toLocaleDateString('ko-KR')}</div>

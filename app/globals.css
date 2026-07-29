@@ -30,7 +30,7 @@ body{
   padding:0 28px;background:#fff;border-bottom:1px solid var(--line);
   position:sticky;top:0;z-index:20;
 }
-.topbar-global-brand{font-size:25px;font-weight:800;color:var(--ink);display:flex;align-items:baseline;gap:3px;}
+.topbar-global-brand{font-size:25px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:3px;}
 .topbar-global-brand .accent{color:var(--safety);}
 .topbar-global-right{display:flex;align-items:center;gap:16px;}
 .topbar-global-email{font-size:14px;color:var(--muted);}

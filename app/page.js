@@ -451,6 +451,7 @@ export default function Dashboard() {
   const [activeLawCategory, setActiveLawCategory] = useState(null); // set on first render from LAW_INDEX keys
   const [view, setView] = useState('checklist'); // 'checklist' | 'lawsearch' | 'yearly' | 'templates'
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [yearlyPeriod, setYearlyPeriod] = useState('daily');
   const [expandedArticle, setExpandedArticle] = useState(null); // "lawName|articleNo"
   const [newItemText, setNewItemText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -1029,15 +1030,30 @@ export default function Dashboard() {
             ))}
           </div>
 
+          <div className="tabs" style={{marginTop:8}}>
+            {PERIODS.map(p => {
+              const pItems = items.filter(i => i.period === p.key);
+              if (pItems.length === 0) return null;
+              return (
+                <div key={p.key} className={"tab" + (yearlyPeriod === p.key ? " active" : "")} onClick={() => { setYearlyPeriod(p.key); setExpandedYearlyItem(null); }}>
+                  {p.label}
+                  <span className="count">{pItems.length}</span>
+                </div>
+              );
+            })}
+          </div>
+
           <div className="panel">
           <div className="panel-head">
             <h2>연도별 완료 기록</h2>
-            <div className="cycle-label">체크 기록은 연도가 지나도 사라지지 않아요 — 연도를 선택해서 지난 기록을 볼 수 있어요</div>
+            <div className="cycle-label">체크 기록은 연도가 지나도 사라지지 않아요 — 연도와 주기를 선택해서 지난 기록을 볼 수 있어요</div>
           </div>
 
-          {PERIODS.map((p, pIdx) => {
+          {PERIODS.filter(p => p.key === yearlyPeriod).map((p, pIdx) => {
             const pItems = items.filter(i => i.period === p.key);
-            if (pItems.length === 0) return null;
+            if (pItems.length === 0) return (
+              <div key={p.key} className="empty">이 주기에는 아직 항목이 없어요.</div>
+            );
             return (
               <div key={p.key} style={{
                 marginTop: pIdx === 0 ? 4 : 14,

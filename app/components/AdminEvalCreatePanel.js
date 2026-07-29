@@ -96,6 +96,25 @@ export default function AdminEvalCreatePanel() {
   const createEvaluation = async () => {
     if (!assignTemplateId || !assignVendorId) { setError('평가 템플릿과 협력업체를 선택해주세요.'); return; }
     const { data: { user } } = await supabase.auth.getUser();
+
+    if (assignVendorId === '__all__') {
+      if (vendors.length === 0) { setError('배정할 협력업체가 없어요.'); return; }
+      if (!confirm(`협력업체 전체(${vendors.length}곳)에 이 평가를 배정할까요?`)) return;
+      const rows = vendors.map(v => ({
+        template_id: assignTemplateId,
+        admin_id: user.id,
+        vendor_id: v.id,
+        period_start: assignStart || null,
+        period_end: assignEnd || null,
+      }));
+      const { error: err } = await supabase.from('evaluations').insert(rows);
+      if (err) { setError(err.message); return; }
+      setAssignTemplateId(''); setAssignVendorId(''); setAssignStart(''); setAssignEnd('');
+      setAssignMsg(`협력업체 ${vendors.length}곳 전체에 평가가 배정되었어요. "평가검토" 메뉴에서 확인할 수 있어요.`);
+      setTimeout(() => setAssignMsg(null), 5000);
+      return;
+    }
+
     const { data, error: err } = await supabase
       .from('evaluations')
       .insert({
@@ -182,6 +201,7 @@ export default function AdminEvalCreatePanel() {
           </select>
           <select value={assignVendorId} onChange={e => setAssignVendorId(e.target.value)} style={{padding:'9px 11px', border:'1px solid var(--line)', borderRadius:4}}>
             <option value="">협력업체 선택</option>
+            {vendors.length > 0 && <option value="__all__">🏢 전체 협력업체 ({vendors.length}곳)</option>}
             {vendors.map(v => <option key={v.id} value={v.id}>{v.company_name || v.email}</option>)}
           </select>
           <input type="date" value={assignStart} onChange={e => setAssignStart(e.target.value)} />

@@ -41,6 +41,7 @@ export default function VendorPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleLogout = async () => {
+    if (!confirm('정말 로그아웃 하시겠습니까?')) return;
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();

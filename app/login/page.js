@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [position, setPosition] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null); // {type, text}
@@ -40,7 +41,7 @@ export default function LoginPage() {
       }
       const { error } = await supabase.auth.signUp({
         email, password,
-        options: { data: { company_name: companyName || null, full_name: fullName || null } },
+        options: { data: { company_name: companyName || null, full_name: fullName || null, position: position || null } },
       });
       if (error) {
         setMsg({ type: 'error', text: '회원가입 실패: ' + error.message });
@@ -94,6 +95,24 @@ export default function LoginPage() {
             <div className="auth-field">
               <label>이름</label>
               <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required placeholder="예: 홍길동" />
+            </div>
+          )}
+          {mode === 'signup' && (
+            <div className="auth-field">
+              <label>직책</label>
+              <select
+                value={position}
+                onChange={e => setPosition(e.target.value)}
+                required
+                style={{width:'100%', padding:'10px 12px', border:'1px solid var(--line)', borderRadius:4, fontSize:14, background:'#fbfaf6'}}
+              >
+                <option value="">직책을 선택해주세요</option>
+                <option value="현장소장">현장소장</option>
+                <option value="안전보건관리책임자">안전보건관리책임자</option>
+                <option value="안전관리자">안전관리자</option>
+                <option value="관리감독자">관리감독자</option>
+                <option value="안전보건관리담당자">안전보건관리담당자</option>
+              </select>
             </div>
           )}
           {mode === 'signup' && (

@@ -176,7 +176,7 @@ body{
 /* PDF 저장 / 인쇄용 리포트 스타일 */
 .print-report{display:none;}
 @media print{
-  .sidebar, .topbar-global, .sidebar-footer-menu, .no-print, .review-live-panel{display:none !important;}
+  .sidebar, .topbar-global, .sidebar-footer-menu, .no-print, .review-live-panel, .masthead, .stripe, .footer-note{display:none !important;}
   .app-body{display:block !important;}
   .main-content{background:#fff !important;background-image:none !important;}
   .content-inner{padding:0 !important;}

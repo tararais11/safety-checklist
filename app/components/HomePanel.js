@@ -9,12 +9,13 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
   const supabase = createClient();
 
   const [announcements, setAnnouncements] = useState([]);
-  const [newTitle, setNewTitle] = useState('');
-  const [newContent, setNewContent] = useState('');
-  const [posting, setPosting] = useState(false);
 
   const [inProgress, setInProgress] = useState([]);
   const [loadingEval, setLoadingEval] = useState(true);
+
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [approvingId, setApprovingId] = useState(null);
 
   const loadAnnouncements = useCallback(async () => {
     const { data } = await supabase
@@ -38,26 +39,28 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
     setLoadingEval(false);
   }, [isAdmin, supabase]);
 
-  useEffect(() => { loadAnnouncements(); loadInProgress(); }, [loadAnnouncements, loadInProgress]);
+  const loadPendingUsers = useCallback(async () => {
+    if (!isAdmin) { setLoadingUsers(false); return; }
+    setLoadingUsers(true);
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('approved', false)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    setPendingUsers(data || []);
+    setLoadingUsers(false);
+  }, [isAdmin, supabase]);
 
-  const postAnnouncement = async () => {
-    if (!newTitle.trim()) return;
-    setPosting(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase
-      .from('announcements')
-      .insert({ admin_id: user.id, title: newTitle.trim(), content: newContent.trim() })
-      .select();
-    setPosting(false);
-    if (error) { alert('등록 실패: ' + error.message); return; }
-    setAnnouncements(prev => [data[0], ...prev]);
-    setNewTitle(''); setNewContent('');
-  };
+  useEffect(() => { loadAnnouncements(); loadInProgress(); loadPendingUsers(); }, [loadAnnouncements, loadInProgress, loadPendingUsers]);
 
-  const deleteAnnouncement = async (id) => {
-    if (!confirm('이 공지사항을 삭제할까요?')) return;
-    await supabase.from('announcements').delete().eq('id', id);
-    setAnnouncements(prev => prev.filter(a => a.id !== id));
+  const quickApprove = async (id, companyName) => {
+    setApprovingId(id);
+    const role = companyName ? 'vendor' : 'user';
+    const { error } = await supabase.from('profiles').update({ approved: true, role }).eq('id', id);
+    setApprovingId(null);
+    if (error) { alert('승인 실패: ' + error.message); return; }
+    setPendingUsers(prev => prev.filter(p => p.id !== id));
   };
 
   return (
@@ -65,7 +68,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
       <div style={{
         background:'var(--ink)', color:'#fff', borderRadius:10, padding:'24px 28px', marginBottom:20,
       }}>
-        <div style={{fontSize:19, fontWeight:800}}>안녕하세요, {displayName || userEmail}님 </div>
+        <div style={{fontSize:19, fontWeight:800}}>안녕하세요, {displayName || userEmail}님 👋</div>
         <div style={{fontSize:13, color:'#c7cbd6', marginTop:4}}>
           {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
         </div>
@@ -75,28 +78,10 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
 
         {/* 공지사항 */}
         <div className="panel">
-          <div className="panel-head"><h2>공지사항</h2></div>
-
-          {isAdmin && (
-            <div style={{marginBottom:16, paddingBottom:16, borderBottom:'1px solid #eee6d3'}}>
-              <input
-                placeholder="제목"
-                value={newTitle}
-                onChange={e => setNewTitle(e.target.value)}
-                style={{width:'100%', marginBottom:8, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:4, fontSize:13.5}}
-              />
-              <textarea
-                placeholder="내용 (선택)"
-                value={newContent}
-                onChange={e => setNewContent(e.target.value)}
-                rows={2}
-                style={{width:'100%', marginBottom:8, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:4, fontSize:13.5, fontFamily:'inherit', resize:'vertical'}}
-              />
-              <button className="add-btn" onClick={postAnnouncement} disabled={posting}>
-                {posting ? '등록 중...' : '+ 공지 등록'}
-              </button>
-            </div>
-          )}
+          <div className="panel-head">
+            <h2>공지사항</h2>
+            {isAdmin && <span className="icon-btn" style={{cursor:'pointer'}} onClick={() => goTo('announcements')}>작성하기 →</span>}
+          </div>
 
           {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
           {announcements.map(a => (
@@ -106,11 +91,6 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
                 {a.content && <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{a.content}</div>}
                 <div className="item-meta" style={{marginTop:2}}>{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
               </div>
-              {isAdmin && (
-                <div className="item-actions">
-                  <button className="icon-btn" onClick={() => deleteAnnouncement(a.id)}>✕</button>
-                </div>
-              )}
             </div>
           ))}
         </div>
@@ -140,6 +120,43 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
               </div>
               <div className="item-actions">
                 <span className="icon-btn">보기 →</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 가입 승인 요청 */}
+        <div className="panel">
+          <div className="panel-head">
+            <h2>가입 승인 요청</h2>
+            <div className="cycle-label">전체 관리는 "회원 관리"에서</div>
+          </div>
+
+          {!isAdmin && (
+            <div className="empty">가입 승인 요청은 관리자만 볼 수 있어요.</div>
+          )}
+
+          {isAdmin && loadingUsers && <div className="empty">불러오는 중...</div>}
+
+          {isAdmin && !loadingUsers && pendingUsers.length === 0 && (
+            <div className="empty">대기 중인 가입 신청이 없어요.</div>
+          )}
+
+          {isAdmin && pendingUsers.map(p => (
+            <div className="item" key={p.id}>
+              <div className="item-body">
+                <div className="item-name">{p.full_name ? `${p.full_name} (${p.email})` : p.email}</div>
+                <div className="item-meta">
+                  {new Date(p.created_at).toLocaleDateString('ko-KR')}
+                  {p.company_name && <span style={{marginLeft:8}}>· {p.company_name}</span>}
+                  {p.position && <span style={{marginLeft:8}}>· {p.position}</span>}
+                </div>
+              </div>
+              <div className="item-actions">
+                <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => quickApprove(p.id, p.company_name)} disabled={approvingId === p.id}>
+                  {approvingId === p.id ? '승인 중...' : '승인'}
+                </button>
+                <button className="icon-btn" onClick={() => goTo('adminUsers')}>자세히</button>
               </div>
             </div>
           ))}

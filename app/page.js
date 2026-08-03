@@ -8,8 +8,10 @@ import { createClient } from '../lib/supabase/client';
 import AdminUsersPanel from './components/AdminUsersPanel';
 import AdminEvalCreatePanel from './components/AdminEvalCreatePanel';
 import AdminEvalReviewPanel from './components/AdminEvalReviewPanel';
+import HomePanel from './components/HomePanel';
 
 const VIEW_TITLES = {
+  home: '홈',
   checklist: '체크리스트',
   yearly: '연도별 기록',
   lawsearch: '법령검색',
@@ -20,6 +22,7 @@ const VIEW_TITLES = {
 };
 
 const VIEW_ICONS = {
+  home: '🏠',
   checklist: '📋',
   yearly: '📅',
   lawsearch: '⚖️',
@@ -449,7 +452,7 @@ export default function Dashboard() {
   const [signedUrls, setSignedUrls] = useState({}); // path -> signed url
   const [active, setActive] = useState('daily');
   const [activeLawCategory, setActiveLawCategory] = useState(null); // set on first render from LAW_INDEX keys
-  const [view, setView] = useState('checklist'); // 'checklist' | 'lawsearch' | 'yearly' | 'templates'
+  const [view, setView] = useState('home'); // 'home' | 'checklist' | 'lawsearch' | 'yearly' | 'templates' | ...
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [yearlyPeriod, setYearlyPeriod] = useState('daily');
   const [expandedArticle, setExpandedArticle] = useState(null); // "lawName|articleNo"
@@ -748,6 +751,15 @@ export default function Dashboard() {
     setView(targetView);
   };
 
+  const ADMIN_ONLY_VIEWS = ['checklist', 'yearly', 'adminUsers', 'evalCreate', 'evalReview'];
+  const goTo = (targetView) => {
+    if (ADMIN_ONLY_VIEWS.includes(targetView)) {
+      goToAdminOnlyView(targetView);
+    } else {
+      setView(targetView);
+    }
+  };
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setSettingsMsg(null);
@@ -854,6 +866,9 @@ export default function Dashboard() {
       <div className="app-body">
       <aside className="sidebar">
         <nav>
+          <div className={"sidebar-nav-item" + (view === 'home' ? " active" : "")} onClick={() => setView('home')}>
+            <span>🏠</span> 홈
+          </div>
           {isAdmin && (
             <>
               <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => goToAdminOnlyView('checklist')}>
@@ -900,6 +915,10 @@ export default function Dashboard() {
       <div className="stripe"></div>
 
       {error && <div className="disclaimer">{error}</div>}
+
+      {view === 'home' && (
+        <HomePanel displayName={displayName} userEmail={userEmail} isAdmin={isAdmin} goTo={goTo} />
+      )}
 
       {view === 'checklist' && isAdmin && (
         <>

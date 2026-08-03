@@ -105,6 +105,11 @@ export default function AdminEvalCreatePanel() {
       id: c.id, content: c.content, criteria_text: c.criteria_text, max_score: c.max_score, sort_order: c.sort_order,
     }));
 
+    if (assignVendorId !== '__all__') {
+      const vendorLabel = vendors.find(v => v.id === assignVendorId);
+      if (!confirm(`"${vendorLabel?.company_name || vendorLabel?.email}"에 "${template?.title}" 평가를 배정할까요?`)) return;
+    }
+
     if (assignVendorId === '__all__') {
       if (vendors.length === 0) { setError('배정할 협력업체가 없어요.'); return; }
       if (!confirm(`협력업체 전체(${vendors.length}곳)에 이 평가를 배정할까요?`)) return;

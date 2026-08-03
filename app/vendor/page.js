@@ -204,7 +204,7 @@ export default function VendorPage() {
 
                 {openEval.eval_templates?.notes && <div className="disclaimer no-print">{openEval.eval_templates.notes}</div>}
 
-                <div style={{display:'flex', gap:10, marginBottom:14, alignItems:'center'}} className="no-print">
+                <div style={{display:'flex', gap:10, marginBottom:14, alignItems:'center', justifyContent:'space-between'}} className="no-print">
                   <button
                     onClick={() => setOpenEval(null)}
                     style={{

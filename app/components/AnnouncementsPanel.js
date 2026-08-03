@@ -14,6 +14,7 @@ export default function AnnouncementsPanel({ isAdmin }) {
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [posting, setPosting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -27,19 +28,47 @@ export default function AnnouncementsPanel({ isAdmin }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const postAnnouncement = async () => {
+  const saveAnnouncement = async () => {
     if (!newTitle.trim()) return;
     setPosting(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase
-      .from('announcements')
-      .insert({ admin_id: user.id, title: newTitle.trim(), content: newContent.trim() })
-      .select();
-    setPosting(false);
-    if (error) { alert('등록 실패: ' + error.message); return; }
-    setAnnouncements(prev => [data[0], ...prev]);
+    if (editingId) {
+      const { data, error } = await supabase
+        .from('announcements')
+        .update({ title: newTitle.trim(), content: newContent.trim() })
+        .eq('id', editingId)
+        .select();
+      setPosting(false);
+      if (error) { alert('수정 실패: ' + error.message); return; }
+      setAnnouncements(prev => prev.map(a => a.id === editingId ? data[0] : a));
+      setSelected(data[0]);
+      setEditingId(null);
+      setNewTitle(''); setNewContent('');
+      setMode('detail');
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from('announcements')
+        .insert({ admin_id: user.id, title: newTitle.trim(), content: newContent.trim() })
+        .select();
+      setPosting(false);
+      if (error) { alert('등록 실패: ' + error.message); return; }
+      setAnnouncements(prev => [data[0], ...prev]);
+      setNewTitle(''); setNewContent('');
+      setMode('list');
+    }
+  };
+
+  const startEdit = (a) => {
+    setEditingId(a.id);
+    setNewTitle(a.title);
+    setNewContent(a.content || '');
+    setMode('write');
+  };
+
+  const cancelWrite = () => {
+    setEditingId(null);
     setNewTitle(''); setNewContent('');
-    setMode('list');
+    setMode(selected ? 'detail' : 'list');
   };
 
   const deleteAnnouncement = async (id) => {
@@ -52,11 +81,11 @@ export default function AnnouncementsPanel({ isAdmin }) {
 
   if (loading) return <div className="empty">불러오는 중...</div>;
 
-  // 글쓰기 화면
+  // 글쓰기 / 수정 화면
   if (mode === 'write') {
     return (
       <div className="panel">
-        <div className="panel-head"><h2>공지사항 작성</h2></div>
+        <div className="panel-head"><h2>{editingId ? '공지사항 수정' : '공지사항 작성'}</h2></div>
         <input
           placeholder="제목"
           value={newTitle}
@@ -71,10 +100,10 @@ export default function AnnouncementsPanel({ isAdmin }) {
           style={{width:'100%', marginBottom:14, padding:'12px', border:'1px solid var(--line)', borderRadius:4, fontSize:14, fontFamily:'inherit', resize:'vertical', lineHeight:1.6}}
         />
         <div style={{display:'flex', gap:10}}>
-          <button className="auth-submit" style={{width:'auto', padding:'11px 26px'}} onClick={postAnnouncement} disabled={posting}>
-            {posting ? '등록 중...' : '등록하기'}
+          <button className="auth-submit" style={{width:'auto', padding:'11px 26px'}} onClick={saveAnnouncement} disabled={posting}>
+            {posting ? '저장 중...' : (editingId ? '수정 완료' : '등록하기')}
           </button>
-          <button className="icon-btn" onClick={() => setMode('list')}>취소</button>
+          <button className="icon-btn" onClick={cancelWrite}>취소</button>
         </div>
       </div>
     );
@@ -93,7 +122,8 @@ export default function AnnouncementsPanel({ isAdmin }) {
           {selected.content || <span style={{color:'var(--muted)'}}>내용이 없어요.</span>}
         </div>
         {isAdmin && (
-          <div style={{marginTop:24}}>
+          <div style={{marginTop:24, display:'flex', gap:10}}>
+            <button className="icon-btn" onClick={() => startEdit(selected)}>수정</button>
             <button className="icon-btn" style={{color:'var(--warn)'}} onClick={() => deleteAnnouncement(selected.id)}>삭제</button>
           </div>
         )}
@@ -107,7 +137,7 @@ export default function AnnouncementsPanel({ isAdmin }) {
       <div className="panel-head">
         <h2>공지사항</h2>
         {isAdmin && (
-          <button className="add-btn" onClick={() => setMode('write')}>+ 글쓰기</button>
+          <button className="add-btn" onClick={() => { setEditingId(null); setNewTitle(''); setNewContent(''); setMode('write'); }}>+ 글쓰기</button>
         )}
       </div>
 

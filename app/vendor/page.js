@@ -58,11 +58,18 @@ export default function VendorPage() {
 
   const openEvaluation = async (ev) => {
     setOpenEval(ev);
-    const { data: criteria } = await supabase
-      .from('eval_criteria')
-      .select('*')
-      .eq('template_id', ev.template_id)
-      .order('sort_order', { ascending: true });
+
+    let criteria;
+    if (ev.criteria_snapshot && ev.criteria_snapshot.length > 0) {
+      criteria = [...ev.criteria_snapshot].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    } else {
+      const { data } = await supabase
+        .from('eval_criteria')
+        .select('*')
+        .eq('template_id', ev.template_id)
+        .order('sort_order', { ascending: true });
+      criteria = data;
+    }
 
     const { data: responses } = await supabase
       .from('eval_responses')

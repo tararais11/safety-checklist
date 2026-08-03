@@ -90,7 +90,8 @@ export default function AdminEvalCreatePanel() {
     setCriterionDraft(prev => ({ ...prev, [templateId]: { content: '', criteria_text: '', max_score: 10 } }));
   };
 
-  const removeCriterion = async (templateId, criterionId) => {
+  const removeCriterion = async (templateId, criterionId, content) => {
+    if (!confirm(`"${content}" 항목을 삭제할까요? 되돌릴 수 없어요.`)) return;
     await supabase.from('eval_criteria').delete().eq('id', criterionId);
     setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, eval_criteria: t.eval_criteria.filter(c => c.id !== criterionId) } : t));
   };
@@ -200,7 +201,7 @@ export default function AdminEvalCreatePanel() {
                       <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{c.criteria_text}</div>
                     </div>
                     <div className="item-actions">
-                      <button className="icon-btn" onClick={() => removeCriterion(t.id, c.id)}>✕</button>
+                      <button className="icon-btn" onClick={() => removeCriterion(t.id, c.id, c.content)}>✕</button>
                     </div>
                   </div>
                 ))}

@@ -99,6 +99,14 @@ export default function AdminEvalReviewPanel() {
     alert('검토 결과가 저장되었어요.');
   };
 
+  const cancelSubmission = async () => {
+    if (!confirm('제출을 취소하고 협력업체가 다시 작성할 수 있게 되돌릴까요?')) return;
+    await supabase.from('evaluations').update({ status: 'pending' }).eq('id', openEval.id);
+    setEvaluations(prev => prev.map(e => e.id === openEval.id ? { ...e, status: 'pending' } : e));
+    setOpenEval(prev => ({ ...prev, status: 'pending' }));
+    alert('제출이 취소되어 협력업체가 다시 작성할 수 있어요.');
+  };
+
   if (loading) return <div className="empty">불러오는 중...</div>;
 
   if (openEval) {
@@ -112,6 +120,9 @@ export default function AdminEvalReviewPanel() {
         <div style={{display:'flex', gap:10, marginBottom:14}} className="no-print">
           <button className="icon-btn" onClick={() => setOpenEval(null)}>← 평가 목록으로</button>
           <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => window.print()}>🖨 PDF로 저장 / 인쇄</button>
+          {openEval.status !== 'pending' && (
+            <button className="icon-btn" style={{color:'var(--warn)'}} onClick={cancelSubmission}>제출취소 (다시 작성하게 하기)</button>
+          )}
         </div>
 
         <div className="panel review-live-panel">

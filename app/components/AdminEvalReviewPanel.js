@@ -130,7 +130,7 @@ export default function AdminEvalReviewPanel() {
               {row.response.file_url ? (
                 <ResponseFileLink path={row.response.file_url} name={row.response.file_name} getSignedUrl={getSignedUrl} />
               ) : (
-                <div style={{fontSize:12.5, color:'var(--muted)', marginBottom:8}}>협력업체가 아직 증빙자료를 첨부하지 않았어요.</div>
+                <div style={{fontSize:12.5, color:'var(--warn)', fontWeight:700, marginBottom:8}}>⚠ 협력업체가 아직 증빙자료를 첨부하지 않았어요.</div>
               )}
               <div style={{display:'flex', gap:10, marginTop:10}}>
                 <input

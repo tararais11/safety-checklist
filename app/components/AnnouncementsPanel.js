@@ -113,7 +113,15 @@ export default function AnnouncementsPanel({ isAdmin }) {
   if (mode === 'detail' && selected) {
     return (
       <div className="panel">
-        <button className="icon-btn" style={{marginBottom:14}} onClick={() => { setMode('list'); setSelected(null); }}>← 목록으로</button>
+        <button
+          onClick={() => { setMode('list'); setSelected(null); }}
+          style={{
+            marginBottom:14, padding:'10px 18px', background:'var(--ink)', color:'#fff', border:'none',
+            borderRadius:6, fontSize:14, fontWeight:700, cursor:'pointer',
+          }}
+        >
+          ← 목록으로
+        </button>
         <div style={{borderBottom:'2px solid var(--ink)', paddingBottom:14, marginBottom:16}}>
           <div style={{fontSize:19, fontWeight:800, marginBottom:8}}>{selected.title}</div>
           <div style={{fontSize:12, color:'var(--muted)'}}>{new Date(selected.created_at).toLocaleDateString('ko-KR')}</div>

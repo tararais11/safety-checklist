@@ -132,6 +132,12 @@ export default function AdminEvalReviewPanel() {
               ) : (
                 <div style={{fontSize:12.5, color:'var(--warn)', fontWeight:700, marginBottom:8}}>⚠ 협력업체가 아직 증빙자료를 첨부하지 않았어요.</div>
               )}
+              {row.response.vendor_comment && (
+                <div style={{marginTop:8, background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4, padding:'8px 10px', fontSize:12.5}}>
+                  <span style={{fontWeight:700, color:'var(--muted)', fontSize:11}}>협력업체 부연설명</span>
+                  <div style={{whiteSpace:'pre-wrap', marginTop:2}}>{row.response.vendor_comment}</div>
+                </div>
+              )}
               <div style={{display:'flex', gap:10, marginTop:10}}>
                 <input
                   type="number" placeholder="점수" min={0} max={row.criterion.max_score}

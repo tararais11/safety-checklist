@@ -115,9 +115,11 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
             >
               <div className="item-body">
                 <div className="item-name">{ev.eval_templates?.title} — {ev.profiles?.company_name || ev.profiles?.email}</div>
-                <div className="item-meta">
-                  {ev.period_start} ~ {ev.period_end}
-                  <span className={"badge " + (ev.status === 'submitted' ? 'ok' : 'warn')} style={{marginLeft:8}}>{statusLabel[ev.status]}</span>
+                <div style={{fontSize:13.5, fontWeight:700, color:'var(--ink)', marginTop:4}}>
+                  📅 {ev.period_start} ~ <span style={{color:'var(--safety)'}}>{ev.period_end}</span>
+                </div>
+                <div className="item-meta" style={{marginTop:4}}>
+                  <span className={"badge " + (ev.status === 'submitted' ? 'ok' : 'warn')}>{statusLabel[ev.status]}</span>
                 </div>
               </div>
               {isAdmin && (

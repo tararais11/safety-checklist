@@ -755,7 +755,7 @@ export default function Dashboard() {
     setView(targetView);
   };
 
-  const ADMIN_ONLY_VIEWS = ['checklist', 'yearly', 'adminUsers', 'evalCreate', 'evalReview', 'announcements'];
+  const ADMIN_ONLY_VIEWS = ['checklist', 'yearly', 'adminUsers', 'evalCreate', 'evalReview'];
   const goTo = (targetView) => {
     if (ADMIN_ONLY_VIEWS.includes(targetView)) {
       goToAdminOnlyView(targetView);
@@ -945,7 +945,7 @@ export default function Dashboard() {
         <HomePanel displayName={displayName} userEmail={userEmail} isAdmin={isAdmin} goTo={goTo} />
       )}
 
-      {view === 'announcements' && isAdmin && (
+      {view === 'announcements' && (
         <AnnouncementsPanel isAdmin={isAdmin} />
       )}
 

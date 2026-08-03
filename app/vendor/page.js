@@ -120,7 +120,11 @@ export default function VendorPage() {
 
   const submitEvaluation = async () => {
     const missing = rows.filter(r => !r.response?.file_url);
-    if (missing.length > 0 && !confirm(`아직 ${missing.length}개 항목에 증빙자료가 없어요. 그래도 제출할까요?`)) return;
+    if (missing.length > 0) {
+      if (!confirm(`아직 ${missing.length}개 항목에 증빙자료가 없어요. 그래도 제출할까요?`)) return;
+    } else {
+      if (!confirm('평가를 제출할까요? 제출 후에는 내용을 수정할 수 없어요.')) return;
+    }
     await supabase.from('evaluations').update({ status: 'submitted' }).eq('id', openEval.id);
     setEvaluations(prev => prev.map(e => e.id === openEval.id ? { ...e, status: 'submitted' } : e));
     setOpenEval(prev => ({ ...prev, status: 'submitted' }));

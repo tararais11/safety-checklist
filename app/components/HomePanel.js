@@ -22,7 +22,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
       .from('announcements')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(5);
     setAnnouncements(data || []);
   }, [supabase]);
 
@@ -34,7 +34,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
       .select('*, eval_templates(title), profiles!evaluations_vendor_id_fkey(email, company_name)')
       .in('status', ['pending', 'submitted'])
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(5);
     setInProgress(data || []);
     setLoadingEval(false);
   }, [isAdmin, supabase]);
@@ -47,7 +47,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
       .select('*')
       .eq('approved', false)
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(5);
     setPendingUsers(data || []);
     setLoadingUsers(false);
   }, [isAdmin, supabase]);
@@ -96,7 +96,10 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
 
         {/* 진행중인 평가 */}
         <div className="panel">
-          <div className="panel-head"><h2>진행중인 평가</h2></div>
+          <div className="panel-head">
+            <h2>진행중인 평가</h2>
+            {isAdmin && <span className="icon-btn" style={{cursor:'pointer'}} onClick={() => goTo('evalReview')}>더보기 →</span>}
+          </div>
 
           {!isAdmin && (
             <div className="empty">협력업체 평가 현황은 관리자만 볼 수 있어요.</div>
@@ -128,7 +131,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
         <div className="panel">
           <div className="panel-head">
             <h2>가입 승인 요청</h2>
-            <div className="cycle-label">전체 관리는 "회원 관리"에서</div>
+            {isAdmin && <span className="icon-btn" style={{cursor:'pointer'}} onClick={() => goTo('adminUsers')}>더보기 →</span>}
           </div>
 
           {!isAdmin && (

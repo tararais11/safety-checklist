@@ -38,11 +38,20 @@ export default function AdminEvalReviewPanel() {
 
   const openReview = async (evaluation) => {
     setOpenEval(evaluation);
-    const { data: criteria } = await supabase
-      .from('eval_criteria')
-      .select('*')
-      .eq('template_id', evaluation.template_id)
-      .order('sort_order', { ascending: true });
+
+    let criteria;
+    if (evaluation.criteria_snapshot && evaluation.criteria_snapshot.length > 0) {
+      // 배정 시점에 고정해둔 항목 스냅샷 사용 (템플릿이 나중에 바뀌어도 영향 없음)
+      criteria = [...evaluation.criteria_snapshot].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    } else {
+      // 스냅샷이 없는 예전 평가는 기존 방식대로 템플릿에서 실시간 조회
+      const { data } = await supabase
+        .from('eval_criteria')
+        .select('*')
+        .eq('template_id', evaluation.template_id)
+        .order('sort_order', { ascending: true });
+      criteria = data;
+    }
 
     const { data: responses } = await supabase
       .from('eval_responses')

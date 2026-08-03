@@ -17,6 +17,7 @@ export default function AdminEvalCreatePanel() {
   const [newNotes, setNewNotes] = useState('');
 
   const [criterionDraft, setCriterionDraft] = useState({});
+  const [expandedTemplateId, setExpandedTemplateId] = useState(null);
 
   const [assignTemplateId, setAssignTemplateId] = useState('');
   const [assignVendorId, setAssignVendorId] = useState('');
@@ -59,6 +60,7 @@ export default function AdminEvalCreatePanel() {
       .select('*, eval_criteria(*)');
     if (err) { setError(err.message); return; }
     setTemplates(prev => [{ ...data[0], eval_criteria: [] }, ...prev]);
+    setExpandedTemplateId(data[0].id);
     setNewTitle(''); setNewLegalBasis(''); setNewNotes('');
   };
 
@@ -154,50 +156,77 @@ export default function AdminEvalCreatePanel() {
           <button className="add-btn" onClick={createTemplate} style={{alignSelf:'flex-start'}}>+ 템플릿 만들기</button>
         </div>
 
-        {templates.map(t => (
-          <div key={t.id} style={{marginTop:18, borderTop:'1px solid #eee6d3', paddingTop:14}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <div style={{fontWeight:800, fontSize:15}}>{t.title}</div>
-              <button className="icon-btn" onClick={() => deleteTemplate(t.id)}>템플릿 삭제</button>
-            </div>
-            {t.legal_basis && <div style={{fontSize:12, color:'var(--muted)', marginTop:2}}>근거: {t.legal_basis}</div>}
-
-            {t.eval_criteria.map(c => (
-              <div className="item" key={c.id}>
-                <div className="item-body">
-                  <div className="item-name">{c.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>(배점 {c.max_score})</span></div>
-                  <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{c.criteria_text}</div>
+        {templates.map(t => {
+          const isOpen = expandedTemplateId === t.id;
+          return (
+          <div
+            key={t.id}
+            style={{
+              marginTop:14, background:'var(--panel)', border:'1px solid var(--line)', borderRadius:6,
+              overflow:'hidden',
+            }}
+          >
+            <div
+              style={{
+                display:'flex', justifyContent:'space-between', alignItems:'center',
+                padding:'14px 16px', cursor:'pointer',
+                borderLeft:'4px solid var(--safety)',
+              }}
+              onClick={() => setExpandedTemplateId(isOpen ? null : t.id)}
+            >
+              <div>
+                <div style={{fontWeight:800, fontSize:15}}>
+                  {t.title} <span className="count" style={{marginLeft:6}}>{t.eval_criteria.length}개 항목</span>
                 </div>
-                <div className="item-actions">
-                  <button className="icon-btn" onClick={() => removeCriterion(t.id, c.id)}>✕</button>
+                {t.legal_basis && <div style={{fontSize:12, color:'var(--muted)', marginTop:3}}>근거: {t.legal_basis}</div>}
+              </div>
+              <div style={{display:'flex', alignItems:'center', gap:12}}>
+                <button className="icon-btn" onClick={e => { e.stopPropagation(); deleteTemplate(t.id); }}>템플릿 삭제</button>
+                <span style={{fontSize:16, color:'var(--muted)'}}>{isOpen ? '▲' : '▼'}</span>
+              </div>
+            </div>
+
+            {isOpen && (
+              <div style={{padding:'0 16px 16px', borderTop:'1px solid #eee6d3'}}>
+                {t.eval_criteria.map(c => (
+                  <div className="item" key={c.id}>
+                    <div className="item-body">
+                      <div className="item-name">{c.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>(배점 {c.max_score})</span></div>
+                      <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{c.criteria_text}</div>
+                    </div>
+                    <div className="item-actions">
+                      <button className="icon-btn" onClick={() => removeCriterion(t.id, c.id)}>✕</button>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="add-row" style={{marginTop:10, alignItems:'flex-start'}}>
+                  <input
+                    placeholder="평가내용"
+                    value={criterionDraft[t.id]?.content || ''}
+                    onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], content: e.target.value } }))}
+                    style={{flex:2}}
+                  />
+                  <textarea
+                    placeholder="평가기준 설명 (줄바꿈 가능: 우수/보통/미흡 기준을 줄마다 나눠서 써보세요)"
+                    value={criterionDraft[t.id]?.criteria_text || ''}
+                    onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], criteria_text: e.target.value } }))}
+                    rows={3}
+                    style={{flex:2, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:3, fontSize:13.5, fontFamily:'inherit', background:'#fbfaf6', resize:'vertical'}}
+                  />
+                  <input
+                    type="number" placeholder="배점"
+                    value={criterionDraft[t.id]?.max_score ?? ''}
+                    onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], max_score: e.target.value } }))}
+                    style={{width:80}}
+                  />
+                  <button className="add-btn" onClick={() => addCriterion(t.id)}>추가</button>
                 </div>
               </div>
-            ))}
-
-            <div className="add-row" style={{marginTop:10, alignItems:'flex-start'}}>
-              <input
-                placeholder="평가내용"
-                value={criterionDraft[t.id]?.content || ''}
-                onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], content: e.target.value } }))}
-                style={{flex:2}}
-              />
-              <textarea
-                placeholder="평가기준 설명 (줄바꿈 가능: 우수/보통/미흡 기준을 줄마다 나눠서 써보세요)"
-                value={criterionDraft[t.id]?.criteria_text || ''}
-                onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], criteria_text: e.target.value } }))}
-                rows={3}
-                style={{flex:2, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:3, fontSize:13.5, fontFamily:'inherit', background:'#fbfaf6', resize:'vertical'}}
-              />
-              <input
-                type="number" placeholder="배점"
-                value={criterionDraft[t.id]?.max_score ?? ''}
-                onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], max_score: e.target.value } }))}
-                style={{width:80}}
-              />
-              <button className="add-btn" onClick={() => addCriterion(t.id)}>추가</button>
-            </div>
+            )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="panel">

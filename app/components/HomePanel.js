@@ -44,11 +44,6 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
         background:'var(--ink)', color:'#fff', borderRadius:10, padding:'28px 30px', marginBottom:24,
         position:'relative', overflow:'hidden',
       }}>
-        <div style={{
-          position:'absolute', inset:0, pointerEvents:'none', opacity:0.8,
-          background:'repeating-linear-gradient(115deg, rgba(194,65,12,0.9) 0 14px, transparent 14px 28px)',
-          clipPath:'polygon(70% 0, 100% 0, 100% 100%, 45% 100%)',
-        }}></div>
         <div style={{position:'relative', zIndex:1}}>
           <div style={{fontSize:11, letterSpacing:'0.14em', color:'#f4dcc9', fontWeight:700, marginBottom:8, textTransform:'uppercase'}}>
             {dateStr}

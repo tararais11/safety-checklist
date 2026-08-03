@@ -151,6 +151,9 @@ export default function VendorPage() {
   };
 
   const saveDraft = () => {
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
     alert('현재까지 작성한 내용이 저장되었어요. 준비되면 "제출하기"를 눌러 관리자에게 보내주세요.');
   };
 
@@ -505,18 +508,15 @@ function EvalRow({ row, readOnly, uploading, onUpload, onSaveComment, getSignedU
             <textarea
               value={comment}
               onChange={e => setComment(e.target.value)}
+              onBlur={() => { if (comment !== savedComment) { onSaveComment(comment); setSavedComment(comment); } }}
               placeholder="예: 최근 3년간 재해 미발생으로 우수 기준 충족합니다."
               rows={2}
               style={{width:'100%', padding:'8px 10px', border:'1px solid var(--line)', borderRadius:4, fontSize:12.5, fontFamily:'inherit', background:'#fbfaf6', resize:'vertical'}}
             />
-            {commentChanged && (
-              <button
-                className="icon-btn"
-                style={{marginTop:4}}
-                onClick={() => { onSaveComment(comment); setSavedComment(comment); }}
-              >
-                의견 저장
-              </button>
+            {commentChanged ? (
+              <div style={{fontSize:11, color:'var(--warn)', marginTop:4}}>다른 곳을 클릭하면 자동 저장돼요</div>
+            ) : (
+              savedComment && <div style={{fontSize:11, color:'var(--ok)', marginTop:4}}>✓ 저장됨</div>
             )}
           </>
         )}

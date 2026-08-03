@@ -3,103 +3,148 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '../../lib/supabase/client';
 
+const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
+
 export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
   const supabase = createClient();
-  const [pendingUsers, setPendingUsers] = useState(null);
-  const [pendingReviews, setPendingReviews] = useState(null);
 
-  const loadStats = useCallback(async () => {
-    if (!isAdmin) return;
-    const { count: uCount } = await supabase
-      .from('profiles').select('*', { count: 'exact', head: true }).eq('approved', false);
-    setPendingUsers(uCount ?? 0);
+  const [announcements, setAnnouncements] = useState([]);
+  const [newTitle, setNewTitle] = useState('');
+  const [newContent, setNewContent] = useState('');
+  const [posting, setPosting] = useState(false);
 
-    const { count: eCount } = await supabase
-      .from('evaluations').select('*', { count: 'exact', head: true }).eq('status', 'submitted');
-    setPendingReviews(eCount ?? 0);
+  const [inProgress, setInProgress] = useState([]);
+  const [loadingEval, setLoadingEval] = useState(true);
+
+  const loadAnnouncements = useCallback(async () => {
+    const { data } = await supabase
+      .from('announcements')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    setAnnouncements(data || []);
+  }, [supabase]);
+
+  const loadInProgress = useCallback(async () => {
+    if (!isAdmin) { setLoadingEval(false); return; }
+    setLoadingEval(true);
+    const { data } = await supabase
+      .from('evaluations')
+      .select('*, eval_templates(title), profiles!evaluations_vendor_id_fkey(email, company_name)')
+      .in('status', ['pending', 'submitted'])
+      .order('created_at', { ascending: false })
+      .limit(20);
+    setInProgress(data || []);
+    setLoadingEval(false);
   }, [isAdmin, supabase]);
 
-  useEffect(() => { loadStats(); }, [loadStats]);
+  useEffect(() => { loadAnnouncements(); loadInProgress(); }, [loadAnnouncements, loadInProgress]);
 
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+  const postAnnouncement = async () => {
+    if (!newTitle.trim()) return;
+    setPosting(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+      .from('announcements')
+      .insert({ admin_id: user.id, title: newTitle.trim(), content: newContent.trim() })
+      .select();
+    setPosting(false);
+    if (error) { alert('등록 실패: ' + error.message); return; }
+    setAnnouncements(prev => [data[0], ...prev]);
+    setNewTitle(''); setNewContent('');
+  };
 
-  const cards = [
-    ...(isAdmin ? [
-      { key: 'checklist', icon: '📋', title: '체크리스트', desc: '일일~연간 주기별 점검 관리' },
-      { key: 'yearly', icon: '📅', title: '연도별 기록', desc: '지난 연도 이행 기록 확인' },
-    ] : []),
-    { key: 'lawsearch', icon: '⚖️', title: '법령검색', desc: '산업안전보건법·중대재해처벌법 조문' },
-    { key: 'templates', icon: '📁', title: '양식함', desc: '빈 양식 파일 업로드·다운로드' },
-    ...(isAdmin ? [
-      { key: 'adminUsers', icon: '🛡️', title: '회원 관리', desc: '가입 승인, 권한 관리' },
-      { key: 'evalCreate', icon: '🏗️', title: '평가생성', desc: '협력업체 평가 템플릿·배정' },
-      { key: 'evalReview', icon: '📝', title: '평가검토', desc: '제출된 평가 검토·점수 입력' },
-    ] : []),
-  ];
+  const deleteAnnouncement = async (id) => {
+    if (!confirm('이 공지사항을 삭제할까요?')) return;
+    await supabase.from('announcements').delete().eq('id', id);
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+  };
 
   return (
     <>
       <div style={{
-        background:'var(--ink)', color:'#fff', borderRadius:10, padding:'28px 30px', marginBottom:24,
-        position:'relative', overflow:'hidden',
+        background:'var(--ink)', color:'#fff', borderRadius:10, padding:'24px 28px', marginBottom:20,
       }}>
-        <div style={{position:'relative', zIndex:1}}>
-          <div style={{fontSize:11, letterSpacing:'0.14em', color:'#f4dcc9', fontWeight:700, marginBottom:8, textTransform:'uppercase'}}>
-            {dateStr}
-          </div>
-          <div style={{fontSize:23, fontWeight:800}}>
-            안녕하세요, {displayName || userEmail}님 👋
-          </div>
-          <div style={{fontSize:13.5, color:'#c7cbd6', marginTop:6}}>
-            오늘도 안전한 하루 보내세요.
-          </div>
+        <div style={{fontSize:19, fontWeight:800}}>안녕하세요, {displayName || userEmail}님 👋</div>
+        <div style={{fontSize:13, color:'#c7cbd6', marginTop:4}}>
+          {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
         </div>
       </div>
 
-      {isAdmin && (
-        <div style={{display:'flex', gap:14, marginBottom:24, flexWrap:'wrap'}}>
-          <div
-            className="panel"
-            style={{flex:'1 1 200px', padding:'18px 20px', cursor:'pointer'}}
-            onClick={() => goTo('adminUsers')}
-          >
-            <div style={{fontSize:12, color:'var(--muted)', fontWeight:700, marginBottom:6}}>승인 대기 중인 회원</div>
-            <div style={{fontSize:28, fontWeight:800, color: pendingUsers > 0 ? 'var(--safety)' : 'var(--ink)'}}>
-              {pendingUsers === null ? '-' : pendingUsers}<span style={{fontSize:14, fontWeight:600, marginLeft:4}}>명</span>
-            </div>
-          </div>
-          <div
-            className="panel"
-            style={{flex:'1 1 200px', padding:'18px 20px', cursor:'pointer'}}
-            onClick={() => goTo('evalReview')}
-          >
-            <div style={{fontSize:12, color:'var(--muted)', fontWeight:700, marginBottom:6}}>검토 대기 중인 평가</div>
-            <div style={{fontSize:28, fontWeight:800, color: pendingReviews > 0 ? 'var(--safety)' : 'var(--ink)'}}>
-              {pendingReviews === null ? '-' : pendingReviews}<span style={{fontSize:14, fontWeight:600, marginLeft:4}}>건</span>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="home-grid">
 
-      <div style={{fontSize:13.5, fontWeight:800, color:'var(--muted)', marginBottom:12, textTransform:'uppercase', letterSpacing:'0.05em'}}>
-        바로가기
-      </div>
-      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(220px, 1fr))', gap:14}}>
-        {cards.map(c => (
-          <div
-            key={c.key}
-            className="panel"
-            style={{padding:'20px', cursor:'pointer', transition:'box-shadow .15s'}}
-            onClick={() => goTo(c.key)}
-            onMouseEnter={e => e.currentTarget.style.boxShadow = '0 6px 18px rgba(28,34,48,0.12)'}
-            onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
-          >
-            <div style={{fontSize:26, marginBottom:10}}>{c.icon}</div>
-            <div style={{fontSize:15, fontWeight:800, marginBottom:4}}>{c.title}</div>
-            <div style={{fontSize:12.5, color:'var(--muted)'}}>{c.desc}</div>
-          </div>
-        ))}
+        {/* 공지사항 */}
+        <div className="panel">
+          <div className="panel-head"><h2>공지사항</h2></div>
+
+          {isAdmin && (
+            <div style={{marginBottom:16, paddingBottom:16, borderBottom:'1px solid #eee6d3'}}>
+              <input
+                placeholder="제목"
+                value={newTitle}
+                onChange={e => setNewTitle(e.target.value)}
+                style={{width:'100%', marginBottom:8, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:4, fontSize:13.5}}
+              />
+              <textarea
+                placeholder="내용 (선택)"
+                value={newContent}
+                onChange={e => setNewContent(e.target.value)}
+                rows={2}
+                style={{width:'100%', marginBottom:8, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:4, fontSize:13.5, fontFamily:'inherit', resize:'vertical'}}
+              />
+              <button className="add-btn" onClick={postAnnouncement} disabled={posting}>
+                {posting ? '등록 중...' : '+ 공지 등록'}
+              </button>
+            </div>
+          )}
+
+          {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
+          {announcements.map(a => (
+            <div className="item" key={a.id}>
+              <div className="item-body">
+                <div className="item-name">{a.title}</div>
+                {a.content && <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{a.content}</div>}
+                <div className="item-meta" style={{marginTop:2}}>{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
+              </div>
+              {isAdmin && (
+                <div className="item-actions">
+                  <button className="icon-btn" onClick={() => deleteAnnouncement(a.id)}>✕</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* 진행중인 평가 */}
+        <div className="panel">
+          <div className="panel-head"><h2>진행중인 평가</h2></div>
+
+          {!isAdmin && (
+            <div className="empty">협력업체 평가 현황은 관리자만 볼 수 있어요.</div>
+          )}
+
+          {isAdmin && loadingEval && <div className="empty">불러오는 중...</div>}
+
+          {isAdmin && !loadingEval && inProgress.length === 0 && (
+            <div className="empty">진행 중인 평가가 없어요.</div>
+          )}
+
+          {isAdmin && inProgress.map(ev => (
+            <div className="item" key={ev.id} style={{cursor:'pointer'}} onClick={() => goTo('evalReview')}>
+              <div className="item-body">
+                <div className="item-name">{ev.eval_templates?.title} — {ev.profiles?.company_name || ev.profiles?.email}</div>
+                <div className="item-meta">
+                  {ev.period_start} ~ {ev.period_end}
+                  <span className={"badge " + (ev.status === 'submitted' ? 'ok' : 'warn')} style={{marginLeft:8}}>{statusLabel[ev.status]}</span>
+                </div>
+              </div>
+              <div className="item-actions">
+                <span className="icon-btn">보기 →</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
       </div>
     </>
   );

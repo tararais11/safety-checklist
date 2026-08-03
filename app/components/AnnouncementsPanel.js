@@ -30,6 +30,8 @@ export default function AnnouncementsPanel({ isAdmin }) {
 
   const saveAnnouncement = async () => {
     if (!newTitle.trim()) return;
+    const confirmMsg = editingId ? '수정하시겠습니까?' : '등록하시겠습니까?';
+    if (!confirm(confirmMsg)) return;
     setPosting(true);
     if (editingId) {
       const { data, error } = await supabase
@@ -103,7 +105,15 @@ export default function AnnouncementsPanel({ isAdmin }) {
           <button className="auth-submit" style={{width:'auto', padding:'11px 26px'}} onClick={saveAnnouncement} disabled={posting}>
             {posting ? '저장 중...' : (editingId ? '수정 완료' : '등록하기')}
           </button>
-          <button className="icon-btn" onClick={cancelWrite}>취소</button>
+          <button
+            onClick={cancelWrite}
+            style={{
+              padding:'11px 26px', background:'#fff', color:'var(--ink)',
+              border:'2px solid var(--ink)', borderRadius:4, fontSize:14, fontWeight:700, cursor:'pointer',
+            }}
+          >
+            취소
+          </button>
         </div>
       </div>
     );

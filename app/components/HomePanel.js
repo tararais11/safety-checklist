@@ -65,7 +65,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
       <div style={{
         background:'var(--ink)', color:'#fff', borderRadius:10, padding:'24px 28px', marginBottom:20,
       }}>
-        <div style={{fontSize:19, fontWeight:800}}>안녕하세요, {displayName || userEmail}님 👋</div>
+        <div style={{fontSize:19, fontWeight:800}}>안녕하세요, {displayName || userEmail}님 </div>
         <div style={{fontSize:13, color:'#c7cbd6', marginTop:4}}>
           {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
         </div>

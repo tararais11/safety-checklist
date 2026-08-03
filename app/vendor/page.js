@@ -25,9 +25,10 @@ export default function VendorPage() {
   const [companyName, setCompanyName] = useState('');
   const [evaluations, setEvaluations] = useState([]);
 
-  const [view, setView] = useState('inprogress'); // 'inprogress' | 'results'
+  const [view, setView] = useState('home'); // 'home' | 'inprogress' | 'results'
   const [openEval, setOpenEval] = useState(null);
   const [showSubmittedDetail, setShowSubmittedDetail] = useState(false);
+  const [announcements, setAnnouncements] = useState([]);
   const [rows, setRows] = useState([]);
   const [signedUrls, setSignedUrls] = useState({});
   const [uploadingId, setUploadingId] = useState(null);
@@ -48,6 +49,14 @@ export default function VendorPage() {
       .order('created_at', { ascending: false });
     if (err) { setError(err.message); setLoading(false); return; }
     setEvaluations(evs || []);
+
+    const { data: ann } = await supabase
+      .from('announcements')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+    setAnnouncements(ann || []);
+
     setLoading(false);
   }, [router, supabase]);
 
@@ -182,6 +191,9 @@ export default function VendorPage() {
       <div className="app-body">
         <aside className="sidebar">
           <nav>
+            <div className={"sidebar-nav-item" + (view === 'home' && !openEval ? " active" : "")} onClick={() => { setView('home'); setOpenEval(null); }}>
+              <span>🏠</span> 홈
+            </div>
             <div className={"sidebar-nav-item" + (view === 'inprogress' && !openEval ? " active" : "")} onClick={() => { setView('inprogress'); setOpenEval(null); }}>
               <span>📝</span> 평가진행
             </div>
@@ -354,6 +366,52 @@ export default function VendorPage() {
                     <div style={{fontSize:10.5, color:'#777', marginTop:20}}>출력일: {new Date().toLocaleDateString('ko-KR')}</div>
                   </div>
                 )}
+              </>
+            ) : view === 'home' ? (
+              <>
+                <div className="masthead">
+                  <div>
+                    <h1>홈</h1>
+                    <div className="sub">공지사항과 진행중인 평가를 확인하세요</div>
+                  </div>
+                </div>
+                <div className="stripe"></div>
+
+                <div className="home-grid">
+                  <div className="panel">
+                    <div className="panel-head">
+                      <h2>공지사항</h2>
+                    </div>
+                    {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
+                    {announcements.map(a => (
+                      <div className="item" key={a.id}>
+                        <div className="item-body">
+                          <div className="item-name">{a.title}</div>
+                          <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="panel">
+                    <div className="panel-head">
+                      <h2>진행중인 평가</h2>
+                      <span className="icon-btn" style={{cursor:'pointer'}} onClick={() => setView('inprogress')}>더보기 →</span>
+                    </div>
+                    {inProgressEvals.length === 0 && <div className="empty">진행 중인 평가가 없어요.</div>}
+                    {inProgressEvals.slice(0, 5).map(ev => (
+                      <div className="item" key={ev.id} style={{cursor:'pointer'}} onClick={() => openEvaluation(ev)}>
+                        <div className="item-body">
+                          <div className="item-name">{ev.eval_templates?.title}</div>
+                          <div className="item-meta">
+                            {ev.period_start} ~ {ev.period_end}
+                            <span className={"badge " + (ev.status === 'submitted' ? 'ok' : 'warn')} style={{marginLeft:8}}>{statusLabel[ev.status]}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </>
             ) : (
               <>

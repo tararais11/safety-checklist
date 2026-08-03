@@ -547,6 +547,10 @@ export default function Dashboard() {
 
   const uploadEvidence = async (item, file) => {
     if (!file) return;
+    const cycleKey0 = getCycleKey(item.period);
+    if (fileMap[item.id]?.[cycleKey0]) {
+      if (!confirm('이미 첨부된 파일이 있어요. 새 파일로 교체할까요? (기존 파일은 사라져요)')) return;
+    }
     setUploading(item.id);
     const cycleKey = getCycleKey(item.period);
     const { data: { user } } = await supabase.auth.getUser();

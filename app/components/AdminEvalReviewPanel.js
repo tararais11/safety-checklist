@@ -5,6 +5,9 @@ import { createClient } from '../../lib/supabase/client';
 
 const statusLabel = { pending: '대기중', submitted: '제출완료', reviewed: '검토완료' };
 
+const printTh = { border:'1px solid #888', padding:'6px 8px', background:'#eee', textAlign:'left', fontSize:11.5 };
+const printTd = { border:'1px solid #999', padding:'6px 8px', verticalAlign:'top', fontSize:11.5 };
+
 export default function AdminEvalReviewPanel() {
   const supabase = createClient();
 
@@ -91,15 +94,19 @@ export default function AdminEvalReviewPanel() {
   if (openEval) {
     const total = reviewRows.reduce((sum, r) => sum + (r.response.review_score === '' || r.response.review_score == null ? 0 : Number(r.response.review_score)), 0);
     const maxTotal = reviewRows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0);
+    const vendorLabel = openEval.profiles?.company_name || openEval.profiles?.email;
 
     return (
       <>
         {error && <div className="disclaimer">{error}</div>}
-        <button className="icon-btn" style={{marginBottom:14}} onClick={() => setOpenEval(null)}>← 평가 목록으로</button>
+        <div style={{display:'flex', gap:10, marginBottom:14}} className="no-print">
+          <button className="icon-btn" onClick={() => setOpenEval(null)}>← 평가 목록으로</button>
+          <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => window.print()}>🖨 PDF로 저장 / 인쇄</button>
+        </div>
 
-        <div className="panel">
+        <div className="panel review-live-panel">
           <div className="panel-head">
-            <h2>{openEval.eval_templates?.title} — {openEval.profiles?.company_name || openEval.profiles?.email}</h2>
+            <h2>{openEval.eval_templates?.title} — {vendorLabel}</h2>
             <div className="cycle-label">{statusLabel[openEval.status]}</div>
           </div>
           {openEval.eval_templates?.legal_basis && (
@@ -143,6 +150,53 @@ export default function AdminEvalReviewPanel() {
           <div style={{marginTop:18}}>
             <button className="auth-submit" style={{width:'auto', padding:'11px 28px'}} onClick={submitReview}>검토 결과 저장</button>
           </div>
+        </div>
+
+        {/* 인쇄/PDF 저장 전용 리포트 — 화면에는 안 보이고 인쇄할 때만 나타나요 */}
+        <div className="print-report">
+          <h1 style={{fontSize:20, marginBottom:2}}>{openEval.eval_templates?.title}</h1>
+          <div style={{fontSize:12, color:'#555', marginBottom:16}}>
+            평가업체: {vendorLabel} &nbsp;|&nbsp; 평가기간: {openEval.period_start} ~ {openEval.period_end} &nbsp;|&nbsp; 상태: {statusLabel[openEval.status]}
+          </div>
+          {openEval.eval_templates?.legal_basis && (
+            <div style={{fontSize:12, marginBottom:12}}><b>평가근거:</b> {openEval.eval_templates.legal_basis}</div>
+          )}
+          {openEval.eval_templates?.notes && (
+            <div style={{fontSize:12, marginBottom:16}}><b>유의사항:</b> {openEval.eval_templates.notes}</div>
+          )}
+
+          <table style={{width:'100%', borderCollapse:'collapse', fontSize:11.5}}>
+            <thead>
+              <tr>
+                <th style={printTh}>No</th>
+                <th style={{...printTh, width:'22%'}}>평가내용</th>
+                <th style={{...printTh, width:'32%'}}>평가기준</th>
+                <th style={printTh}>배점</th>
+                <th style={printTh}>검토점수</th>
+                <th style={{...printTh, width:'20%'}}>검토의견</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reviewRows.map((row, idx) => (
+                <tr key={row.criterion.id}>
+                  <td style={printTd}>{idx + 1}</td>
+                  <td style={printTd}>{row.criterion.content}</td>
+                  <td style={{...printTd, whiteSpace:'pre-wrap'}}>{row.criterion.criteria_text}</td>
+                  <td style={{...printTd, textAlign:'center'}}>{row.criterion.max_score}</td>
+                  <td style={{...printTd, textAlign:'center'}}>{row.response.review_score === '' || row.response.review_score == null ? '-' : row.response.review_score}</td>
+                  <td style={printTd}>{row.response.review_comment}</td>
+                </tr>
+              ))}
+              <tr>
+                <td style={{...printTd, fontWeight:700}} colSpan={3}>합계</td>
+                <td style={{...printTd, fontWeight:700, textAlign:'center'}}>{maxTotal}</td>
+                <td style={{...printTd, fontWeight:700, textAlign:'center'}}>{total}</td>
+                <td style={printTd}></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style={{fontSize:10.5, color:'#777', marginTop:20}}>출력일: {new Date().toLocaleDateString('ko-KR')}</div>
         </div>
       </>
     );

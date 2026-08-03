@@ -95,8 +95,8 @@ export default function AdminEvalReviewPanel() {
     }
     await supabase.from('evaluations').update({ status: 'reviewed' }).eq('id', openEval.id);
     setEvaluations(prev => prev.map(e => e.id === openEval.id ? { ...e, status: 'reviewed' } : e));
-    setOpenEval(prev => ({ ...prev, status: 'reviewed' }));
     alert('검토 결과가 저장되었어요.');
+    setOpenEval(null);
   };
 
   const cancelSubmission = async () => {
@@ -117,8 +117,16 @@ export default function AdminEvalReviewPanel() {
     return (
       <>
         {error && <div className="disclaimer">{error}</div>}
-        <div style={{display:'flex', gap:10, marginBottom:14}} className="no-print">
-          <button className="icon-btn" onClick={() => setOpenEval(null)}>← 평가 목록으로</button>
+        <div style={{display:'flex', gap:10, marginBottom:14, alignItems:'center'}} className="no-print">
+          <button
+            onClick={() => setOpenEval(null)}
+            style={{
+              padding:'10px 18px', background:'var(--ink)', color:'#fff', border:'none',
+              borderRadius:6, fontSize:14, fontWeight:700, cursor:'pointer',
+            }}
+          >
+            ← 평가 목록으로
+          </button>
           <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => window.print()}>🖨 PDF로 저장 / 인쇄</button>
           {openEval.status !== 'pending' && (
             <button className="icon-btn" style={{color:'var(--warn)'}} onClick={cancelSubmission}>제출취소 (다시 작성하게 하기)</button>

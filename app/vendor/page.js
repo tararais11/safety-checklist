@@ -202,14 +202,24 @@ export default function VendorPage() {
                 </div>
                 <div className="stripe"></div>
 
-                {openEval.eval_templates?.notes && <div className="disclaimer">{openEval.eval_templates.notes}</div>}
+                {openEval.eval_templates?.notes && <div className="disclaimer no-print">{openEval.eval_templates.notes}</div>}
 
-                <button className="icon-btn" style={{marginBottom:14}} onClick={() => setOpenEval(null)}>← 목록으로</button>
-                {openEval.status === 'reviewed' && (
-                  <button className="add-btn" style={{fontSize:12, padding:'6px 12px', marginLeft:10, marginBottom:14}} onClick={() => window.print()}>
-                    🖨 PDF로 저장 / 인쇄
+                <div style={{display:'flex', gap:10, marginBottom:14, alignItems:'center'}} className="no-print">
+                  <button
+                    onClick={() => setOpenEval(null)}
+                    style={{
+                      padding:'10px 18px', background:'var(--ink)', color:'#fff', border:'none',
+                      borderRadius:6, fontSize:14, fontWeight:700, cursor:'pointer',
+                    }}
+                  >
+                    ← 목록으로
                   </button>
-                )}
+                  {openEval.status === 'reviewed' && (
+                    <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => window.print()}>
+                      🖨 PDF로 저장 / 인쇄
+                    </button>
+                  )}
+                </div>
 
                 {openEval.status === 'submitted' ? (
                   <div className="panel">

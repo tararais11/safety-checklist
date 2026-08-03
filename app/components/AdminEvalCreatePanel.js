@@ -97,6 +97,12 @@ export default function AdminEvalCreatePanel() {
     if (!assignTemplateId || !assignVendorId) { setError('평가 템플릿과 협력업체를 선택해주세요.'); return; }
     const { data: { user } } = await supabase.auth.getUser();
 
+    // 배정 시점의 항목들을 그대로 고정(스냅샷)해서 저장 — 나중에 템플릿을 수정해도 이 평가는 안 바뀌어요
+    const template = templates.find(t => t.id === assignTemplateId);
+    const snapshot = (template?.eval_criteria || []).map(c => ({
+      id: c.id, content: c.content, criteria_text: c.criteria_text, max_score: c.max_score, sort_order: c.sort_order,
+    }));
+
     if (assignVendorId === '__all__') {
       if (vendors.length === 0) { setError('배정할 협력업체가 없어요.'); return; }
       if (!confirm(`협력업체 전체(${vendors.length}곳)에 이 평가를 배정할까요?`)) return;
@@ -106,6 +112,7 @@ export default function AdminEvalCreatePanel() {
         vendor_id: v.id,
         period_start: assignStart || null,
         period_end: assignEnd || null,
+        criteria_snapshot: snapshot,
       }));
       const { error: err } = await supabase.from('evaluations').insert(rows);
       if (err) { setError(err.message); return; }
@@ -123,6 +130,7 @@ export default function AdminEvalCreatePanel() {
         vendor_id: assignVendorId,
         period_start: assignStart || null,
         period_end: assignEnd || null,
+        criteria_snapshot: snapshot,
       })
       .select('*, eval_templates(title), profiles!evaluations_vendor_id_fkey(email, company_name)');
     if (err) { setError(err.message); return; }

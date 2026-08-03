@@ -891,7 +891,6 @@ export default function Dashboard() {
       <div className="masthead">
         <div>
           <h1>{VIEW_TITLES[view] || '안전보건 통합관리시스템'}</h1>
-          <div className="sub">산업안전보건법 · 중대재해처벌법 대응 — 일일/주간/월간/분기/반기/연간 이행 관리</div>
         </div>
       </div>
       <div className="stripe"></div>
@@ -1248,9 +1247,6 @@ export default function Dashboard() {
       {view === 'evalCreate' && isAdmin && <AdminEvalCreatePanel />}
       {view === 'evalReview' && isAdmin && <AdminEvalReviewPanel />}
 
-      <div className="footer-note">
-        모든 데이터는 내 계정으로 클라우드에 저장되어 어느 기기에서 로그인해도 동일하게 보입니다.
-      </div>
         </div>
       </main>
       </div>

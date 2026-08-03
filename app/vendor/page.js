@@ -24,6 +24,7 @@ export default function VendorPage() {
 
   const [view, setView] = useState('inprogress'); // 'inprogress' | 'results'
   const [openEval, setOpenEval] = useState(null);
+  const [showSubmittedDetail, setShowSubmittedDetail] = useState(false);
   const [rows, setRows] = useState([]);
   const [signedUrls, setSignedUrls] = useState({});
   const [uploadingId, setUploadingId] = useState(null);
@@ -58,6 +59,7 @@ export default function VendorPage() {
 
   const openEvaluation = async (ev) => {
     setOpenEval(ev);
+    setShowSubmittedDetail(false);
 
     let criteria;
     if (ev.criteria_snapshot && ev.criteria_snapshot.length > 0) {
@@ -209,6 +211,36 @@ export default function VendorPage() {
                   </button>
                 )}
 
+                {openEval.status === 'submitted' ? (
+                  <div className="panel">
+                    <div style={{textAlign:'center', padding:'36px 20px 28px'}}>
+                      <div style={{fontSize:38, marginBottom:10}}>✅</div>
+                      <div style={{fontSize:17, fontWeight:800, marginBottom:8}}>제출이 완료되었어요</div>
+                      <div style={{fontSize:13.5, color:'var(--muted)', marginBottom:20, lineHeight:1.7}}>
+                        관리자 검토를 기다리고 있어요. 제출한 내용은 더 이상 수정할 수 없어요.<br/>
+                        검토가 완료되면 "평가결과"에서 점수와 의견을 확인할 수 있어요.
+                      </div>
+                      <button className="icon-btn" onClick={() => setShowSubmittedDetail(v => !v)}>
+                        {showSubmittedDetail ? '제출한 내용 접기 ▲' : '제출한 내용 확인하기 ▼'}
+                      </button>
+                    </div>
+                    {showSubmittedDetail && (
+                      <div style={{borderTop:'1px solid #eee6d3', paddingTop:10}}>
+                        {rows.map(row => (
+                          <EvalRow
+                            key={row.criterion.id}
+                            row={row}
+                            readOnly={true}
+                            uploading={false}
+                            onUpload={() => {}}
+                            onSaveComment={() => {}}
+                            getSignedUrl={getSignedUrl}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
                 <div className="panel review-live-panel">
                   <div className="panel-head">
                     <h2>평가 항목</h2>
@@ -238,7 +270,7 @@ export default function VendorPage() {
                       </span>
                     </div>
                   )}
-                  {openEval.status !== 'reviewed' && (
+                  {openEval.status === 'pending' && (
                     <div style={{marginTop:20, display:'flex', justifyContent:'flex-end', gap:12}}>
                       <button
                         onClick={saveDraft}
@@ -262,6 +294,7 @@ export default function VendorPage() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {openEval.status === 'reviewed' && (
                   <div className="print-report">

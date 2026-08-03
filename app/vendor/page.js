@@ -406,9 +406,11 @@ export default function VendorPage() {
                       <div className="item" key={ev.id} style={{cursor:'pointer'}} onClick={() => openEvaluation(ev)}>
                         <div className="item-body">
                           <div className="item-name">{ev.eval_templates?.title}</div>
-                          <div className="item-meta">
-                            {ev.period_start} ~ {ev.period_end}
-                            <span className={"badge " + (ev.status === 'submitted' ? 'ok' : 'warn')} style={{marginLeft:8}}>{statusLabel[ev.status]}</span>
+                          <div style={{fontSize:13.5, fontWeight:700, color:'var(--ink)', marginTop:4}}>
+                            📅 {ev.period_start} ~ <span style={{color:'var(--safety)'}}>{ev.period_end}</span>
+                          </div>
+                          <div className="item-meta" style={{marginTop:4}}>
+                            <span className={"badge " + (ev.status === 'submitted' ? 'ok' : 'warn')}>{statusLabel[ev.status]}</span>
                           </div>
                         </div>
                       </div>
@@ -442,9 +444,11 @@ export default function VendorPage() {
                     <div className="item" key={ev.id} style={{cursor:'pointer'}} onClick={() => openEvaluation(ev)}>
                       <div className="item-body">
                         <div className="item-name">{ev.eval_templates?.title}</div>
-                        <div className="item-meta">
-                          {ev.period_start} ~ {ev.period_end}
-                          <span className={"badge " + (ev.status === 'reviewed' ? 'ok' : 'warn')} style={{marginLeft:8}}>{statusLabel[ev.status]}</span>
+                        <div style={{fontSize:13.5, fontWeight:700, color:'var(--ink)', marginTop:4}}>
+                          📅 {ev.period_start} ~ <span style={{color:'var(--safety)'}}>{ev.period_end}</span>
+                        </div>
+                        <div className="item-meta" style={{marginTop:4}}>
+                          <span className={"badge " + (ev.status === 'reviewed' ? 'ok' : 'warn')}>{statusLabel[ev.status]}</span>
                         </div>
                       </div>
                       <div className="item-actions">

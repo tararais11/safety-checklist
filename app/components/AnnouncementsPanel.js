@@ -143,13 +143,19 @@ export default function AnnouncementsPanel({ isAdmin }) {
 
       {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
 
-      {announcements.map(a => (
+      {announcements.map((a, idx) => (
         <div
           className="item"
           key={a.id}
           style={{cursor:'pointer'}}
           onClick={() => { setSelected(a); setMode('detail'); }}
         >
+          <div style={{
+            width:32, flexShrink:0, textAlign:'center', color:'var(--muted)', fontSize:13, fontWeight:700,
+            alignSelf:'center',
+          }}>
+            {announcements.length - idx}
+          </div>
           <div className="item-body">
             <div className="item-name">{a.title}</div>
             <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>

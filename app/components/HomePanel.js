@@ -27,7 +27,6 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
   }, [supabase]);
 
   const loadInProgress = useCallback(async () => {
-    if (!isAdmin) { setLoadingEval(false); return; }
     setLoadingEval(true);
     const { data } = await supabase
       .from('evaluations')
@@ -37,7 +36,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
       .limit(5);
     setInProgress(data || []);
     setLoadingEval(false);
-  }, [isAdmin, supabase]);
+  }, [supabase]);
 
   const loadPendingUsers = useCallback(async () => {
     if (!isAdmin) { setLoadingUsers(false); return; }
@@ -101,18 +100,19 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
             {isAdmin && <span className="icon-btn" style={{cursor:'pointer'}} onClick={() => goTo('evalReview')}>더보기 →</span>}
           </div>
 
-          {!isAdmin && (
-            <div className="empty">협력업체 평가 현황은 관리자만 볼 수 있어요.</div>
-          )}
+          {loadingEval && <div className="empty">불러오는 중...</div>}
 
-          {isAdmin && loadingEval && <div className="empty">불러오는 중...</div>}
-
-          {isAdmin && !loadingEval && inProgress.length === 0 && (
+          {!loadingEval && inProgress.length === 0 && (
             <div className="empty">진행 중인 평가가 없어요.</div>
           )}
 
-          {isAdmin && inProgress.map(ev => (
-            <div className="item" key={ev.id} style={{cursor:'pointer'}} onClick={() => goTo('evalReview')}>
+          {inProgress.map(ev => (
+            <div
+              className="item"
+              key={ev.id}
+              style={isAdmin ? {cursor:'pointer'} : {}}
+              onClick={() => isAdmin && goTo('evalReview')}
+            >
               <div className="item-body">
                 <div className="item-name">{ev.eval_templates?.title} — {ev.profiles?.company_name || ev.profiles?.email}</div>
                 <div className="item-meta">
@@ -120,9 +120,11 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
                   <span className={"badge " + (ev.status === 'submitted' ? 'ok' : 'warn')} style={{marginLeft:8}}>{statusLabel[ev.status]}</span>
                 </div>
               </div>
-              <div className="item-actions">
-                <span className="icon-btn">보기 →</span>
-              </div>
+              {isAdmin && (
+                <div className="item-actions">
+                  <span className="icon-btn">보기 →</span>
+                </div>
+              )}
             </div>
           ))}
         </div>

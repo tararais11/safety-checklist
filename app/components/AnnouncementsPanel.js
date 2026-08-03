@@ -142,12 +142,11 @@ export default function AnnouncementsPanel({ isAdmin }) {
   // 목록 화면 (기본)
   return (
     <div className="panel">
-      <div className="panel-head">
-        <h2>공지사항</h2>
-        {isAdmin && (
+      {isAdmin && (
+        <div className="panel-head" style={{justifyContent:'flex-end'}}>
           <button className="add-btn" onClick={() => { setEditingId(null); setNewTitle(''); setNewContent(''); setMode('write'); }}>+ 글쓰기</button>
-        )}
-      </div>
+        </div>
+      )}
 
       {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
 

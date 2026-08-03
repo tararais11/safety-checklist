@@ -117,7 +117,7 @@ export default function AdminEvalReviewPanel() {
     return (
       <>
         {error && <div className="disclaimer">{error}</div>}
-        <div style={{display:'flex', gap:10, marginBottom:14, alignItems:'center'}} className="no-print">
+        <div style={{display:'flex', gap:10, marginBottom:14, alignItems:'center', justifyContent:'space-between'}} className="no-print">
           <button
             onClick={() => setOpenEval(null)}
             style={{
@@ -127,10 +127,12 @@ export default function AdminEvalReviewPanel() {
           >
             ← 평가 목록으로
           </button>
-          <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => window.print()}>🖨 PDF로 저장 / 인쇄</button>
-          {openEval.status !== 'pending' && (
-            <button className="icon-btn" style={{color:'var(--warn)'}} onClick={cancelSubmission}>제출취소 (다시 작성하게 하기)</button>
-          )}
+          <div style={{display:'flex', gap:10}}>
+            <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => window.print()}>🖨 PDF로 저장 / 인쇄</button>
+            {openEval.status !== 'pending' && (
+              <button className="icon-btn" style={{color:'var(--warn)'}} onClick={cancelSubmission}>제출취소 (다시 작성하게 하기)</button>
+            )}
+          </div>
         </div>
 
         <div className="panel review-live-panel">

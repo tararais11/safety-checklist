@@ -114,6 +114,20 @@ export default function VendorPage() {
     setUploadingId(null);
   };
 
+  const saveVendorComment = async (criterion, comment) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error: dbErr } = await supabase
+      .from('eval_responses')
+      .upsert({
+        evaluation_id: openEval.id,
+        criterion_id: criterion.id,
+        vendor_comment: comment,
+      }, { onConflict: 'evaluation_id,criterion_id' })
+      .select();
+    if (dbErr) { setError('의견 저장 실패: ' + dbErr.message); return; }
+    setRows(prev => prev.map(r => r.criterion.id === criterion.id ? { ...r, response: { ...(r.response || {}), ...data[0] } } : r));
+  };
+
   const getSignedUrl = async (path) => {
     if (signedUrls[path]) return signedUrls[path];
     const { data } = await supabase.storage.from('vendor-evidence').createSignedUrl(path, 3600);
@@ -203,6 +217,7 @@ export default function VendorPage() {
                       readOnly={openEval.status === 'reviewed'}
                       uploading={uploadingId === row.criterion.id}
                       onUpload={file => uploadEvidence(row.criterion, file)}
+                      onSaveComment={comment => saveVendorComment(row.criterion, comment)}
                       getSignedUrl={getSignedUrl}
                     />
                   ))}
@@ -317,8 +332,10 @@ export default function VendorPage() {
   );
 }
 
-function EvalRow({ row, readOnly, uploading, onUpload, getSignedUrl }) {
+function EvalRow({ row, readOnly, uploading, onUpload, onSaveComment, getSignedUrl }) {
   const [url, setUrl] = useState(null);
+  const [comment, setComment] = useState(row.response?.vendor_comment || '');
+  const [savedComment, setSavedComment] = useState(row.response?.vendor_comment || '');
   const path = row.response?.file_url;
 
   useEffect(() => {
@@ -326,6 +343,7 @@ function EvalRow({ row, readOnly, uploading, onUpload, getSignedUrl }) {
   }, [path]);
 
   const reviewed = row.response?.review_score !== undefined && row.response?.review_score !== null;
+  const commentChanged = comment !== savedComment;
 
   return (
     <div className="item" style={{flexDirection:'column', alignItems:'stretch'}}>
@@ -350,6 +368,33 @@ function EvalRow({ row, readOnly, uploading, onUpload, getSignedUrl }) {
           </label>
         )}
       </div>
+
+      <div style={{marginTop:10}}>
+        <div style={{fontSize:11.5, fontWeight:700, color:'var(--muted)', marginBottom:4}}>첨부자료에 대한 부연설명 (선택)</div>
+        {readOnly ? (
+          savedComment ? <div style={{fontSize:12.5, whiteSpace:'pre-wrap'}}>{savedComment}</div> : <div style={{fontSize:12.5, color:'var(--muted)'}}>작성된 설명이 없어요.</div>
+        ) : (
+          <>
+            <textarea
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              placeholder="예: 최근 3년간 재해 미발생으로 우수 기준 충족합니다."
+              rows={2}
+              style={{width:'100%', padding:'8px 10px', border:'1px solid var(--line)', borderRadius:4, fontSize:12.5, fontFamily:'inherit', background:'#fbfaf6', resize:'vertical'}}
+            />
+            {commentChanged && (
+              <button
+                className="icon-btn"
+                style={{marginTop:4}}
+                onClick={() => { onSaveComment(comment); setSavedComment(comment); }}
+              >
+                의견 저장
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
       {reviewed && (
         <div style={{marginTop:10, background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4, padding:'10px 12px', fontSize:12.5}}>
           <b>검토점수: {row.response.review_score} / {row.criterion.max_score}</b>

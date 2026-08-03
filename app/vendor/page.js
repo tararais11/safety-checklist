@@ -136,6 +136,10 @@ export default function VendorPage() {
     return data.signedUrl;
   };
 
+  const saveDraft = () => {
+    alert('현재까지 작성한 내용이 저장되었어요. 준비되면 "제출하기"를 눌러 관리자에게 보내주세요.');
+  };
+
   const submitEvaluation = async () => {
     const missing = rows.filter(r => !r.response?.file_url);
     if (missing.length > 0) {
@@ -235,8 +239,24 @@ export default function VendorPage() {
                     </div>
                   )}
                   {openEval.status !== 'reviewed' && (
-                    <div style={{marginTop:16}}>
-                      <button className="auth-submit" style={{width:'auto', padding:'11px 24px'}} onClick={submitEvaluation}>
+                    <div style={{marginTop:20, display:'flex', justifyContent:'flex-end', gap:12}}>
+                      <button
+                        onClick={saveDraft}
+                        style={{
+                          padding:'12px 22px', background:'#fff', color:'var(--ink)',
+                          border:'2px solid var(--ink)', borderRadius:6, fontSize:14, fontWeight:700, cursor:'pointer',
+                        }}
+                      >
+                        저장하기
+                      </button>
+                      <button
+                        onClick={submitEvaluation}
+                        style={{
+                          padding:'12px 32px', background:'var(--safety)', color:'#fff',
+                          border:'none', borderRadius:6, fontSize:16, fontWeight:800, cursor:'pointer',
+                          boxShadow:'0 4px 14px rgba(194,65,12,0.35)',
+                        }}
+                      >
                         제출하기
                       </button>
                     </div>

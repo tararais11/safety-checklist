@@ -85,6 +85,10 @@ export default function VendorPage() {
 
   const uploadEvidence = async (criterion, file) => {
     if (!file) return;
+    const existing = rows.find(r => r.criterion.id === criterion.id);
+    if (existing?.response?.file_url) {
+      if (!confirm('이미 첨부된 증빙자료가 있어요. 새 파일로 교체할까요? (기존 파일은 사라져요)')) return;
+    }
     setUploadingId(criterion.id);
     const { data: { user } } = await supabase.auth.getUser();
     const extMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);

@@ -8,6 +8,9 @@ import { createClient } from '../../lib/supabase/client';
 
 const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
 
+const printTh = { border:'1px solid #888', padding:'6px 8px', background:'#eee', textAlign:'left', fontSize:11.5 };
+const printTd = { border:'1px solid #999', padding:'6px 8px', verticalAlign:'top', fontSize:11.5 };
+
 export default function VendorPage() {
   const supabase = createClient();
   const router = useRouter();
@@ -167,8 +170,13 @@ export default function VendorPage() {
                 {openEval.eval_templates?.notes && <div className="disclaimer">{openEval.eval_templates.notes}</div>}
 
                 <button className="icon-btn" style={{marginBottom:14}} onClick={() => setOpenEval(null)}>← 목록으로</button>
+                {openEval.status === 'reviewed' && (
+                  <button className="add-btn" style={{fontSize:12, padding:'6px 12px', marginLeft:10, marginBottom:14}} onClick={() => window.print()}>
+                    🖨 PDF로 저장 / 인쇄
+                  </button>
+                )}
 
-                <div className="panel">
+                <div className="panel review-live-panel">
                   <div className="panel-head">
                     <h2>평가 항목</h2>
                     <div className="cycle-label">{statusLabel[openEval.status]}</div>
@@ -204,6 +212,49 @@ export default function VendorPage() {
                     </div>
                   )}
                 </div>
+
+                {openEval.status === 'reviewed' && (
+                  <div className="print-report">
+                    <h1 style={{fontSize:20, marginBottom:2}}>{openEval.eval_templates?.title}</h1>
+                    <div style={{fontSize:12, color:'#555', marginBottom:16}}>
+                      평가업체: {companyName || userEmail} &nbsp;|&nbsp; 평가기간: {openEval.period_start} ~ {openEval.period_end} &nbsp;|&nbsp; 상태: {statusLabel[openEval.status]}
+                    </div>
+                    {openEval.eval_templates?.legal_basis && (
+                      <div style={{fontSize:12, marginBottom:12}}><b>평가근거:</b> {openEval.eval_templates.legal_basis}</div>
+                    )}
+                    <table style={{width:'100%', borderCollapse:'collapse', fontSize:11.5}}>
+                      <thead>
+                        <tr>
+                          <th style={printTh}>No</th>
+                          <th style={{...printTh, width:'22%'}}>평가내용</th>
+                          <th style={{...printTh, width:'32%'}}>평가기준</th>
+                          <th style={printTh}>배점</th>
+                          <th style={printTh}>검토점수</th>
+                          <th style={{...printTh, width:'20%'}}>검토의견</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((row, idx) => (
+                          <tr key={row.criterion.id}>
+                            <td style={printTd}>{idx + 1}</td>
+                            <td style={printTd}>{row.criterion.content}</td>
+                            <td style={{...printTd, whiteSpace:'pre-wrap'}}>{row.criterion.criteria_text}</td>
+                            <td style={{...printTd, textAlign:'center'}}>{row.criterion.max_score}</td>
+                            <td style={{...printTd, textAlign:'center'}}>{row.response?.review_score ?? '-'}</td>
+                            <td style={printTd}>{row.response?.review_comment}</td>
+                          </tr>
+                        ))}
+                        <tr>
+                          <td style={{...printTd, fontWeight:700}} colSpan={3}>합계</td>
+                          <td style={{...printTd, fontWeight:700, textAlign:'center'}}>{rows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0)}</td>
+                          <td style={{...printTd, fontWeight:700, textAlign:'center'}}>{rows.reduce((sum, r) => sum + (r.response?.review_score == null ? 0 : Number(r.response.review_score)), 0)}</td>
+                          <td style={printTd}></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div style={{fontSize:10.5, color:'#777', marginTop:20}}>출력일: {new Date().toLocaleDateString('ko-KR')}</div>
+                  </div>
+                )}
               </>
             ) : (
               <>

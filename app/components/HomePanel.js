@@ -80,7 +80,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
         <div className="panel">
           <div className="panel-head">
             <h2>공지사항</h2>
-            {isAdmin && <span className="icon-btn" style={{cursor:'pointer'}} onClick={() => goTo('announcements')}>작성하기 →</span>}
+            <span className="icon-btn" style={{cursor:'pointer'}} onClick={() => goTo('announcements')}>더보기 →</span>
           </div>
 
           {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}

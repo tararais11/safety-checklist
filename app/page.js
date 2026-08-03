@@ -9,9 +9,11 @@ import AdminUsersPanel from './components/AdminUsersPanel';
 import AdminEvalCreatePanel from './components/AdminEvalCreatePanel';
 import AdminEvalReviewPanel from './components/AdminEvalReviewPanel';
 import HomePanel from './components/HomePanel';
+import AnnouncementsPanel from './components/AnnouncementsPanel';
 
 const VIEW_TITLES = {
   home: '홈',
+  announcements: '공지사항',
   checklist: '체크리스트',
   yearly: '연도별 기록',
   lawsearch: '법령검색',
@@ -23,6 +25,7 @@ const VIEW_TITLES = {
 
 const VIEW_ICONS = {
   home: '🏠',
+  announcements: '📢',
   checklist: '📋',
   yearly: '📅',
   lawsearch: '⚖️',
@@ -453,6 +456,7 @@ export default function Dashboard() {
   const [active, setActive] = useState('daily');
   const [activeLawCategory, setActiveLawCategory] = useState(null); // set on first render from LAW_INDEX keys
   const [view, setView] = useState('home'); // 'home' | 'checklist' | 'lawsearch' | 'yearly' | 'templates' | ...
+  const [homeExpanded, setHomeExpanded] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [yearlyPeriod, setYearlyPeriod] = useState('daily');
   const [expandedArticle, setExpandedArticle] = useState(null); // "lawName|articleNo"
@@ -751,7 +755,7 @@ export default function Dashboard() {
     setView(targetView);
   };
 
-  const ADMIN_ONLY_VIEWS = ['checklist', 'yearly', 'adminUsers', 'evalCreate', 'evalReview'];
+  const ADMIN_ONLY_VIEWS = ['checklist', 'yearly', 'adminUsers', 'evalCreate', 'evalReview', 'announcements'];
   const goTo = (targetView) => {
     if (ADMIN_ONLY_VIEWS.includes(targetView)) {
       goToAdminOnlyView(targetView);
@@ -866,9 +870,30 @@ export default function Dashboard() {
       <div className="app-body">
       <aside className="sidebar">
         <nav>
-          <div className={"sidebar-nav-item" + (view === 'home' ? " active" : "")} onClick={() => setView('home')}>
-            <span>🏠</span> 홈
+          <div
+            className={"sidebar-nav-item" + (view === 'home' ? " active" : "")}
+            style={{justifyContent:'space-between'}}
+            onClick={() => setView('home')}
+          >
+            <span><span style={{marginRight:10}}>🏠</span>홈</span>
+            {isAdmin && (
+              <span
+                onClick={e => { e.stopPropagation(); setHomeExpanded(v => !v); }}
+                style={{fontSize:11, opacity:0.8, padding:'2px 4px'}}
+              >
+                {homeExpanded ? '▲' : '▼'}
+              </span>
+            )}
           </div>
+          {isAdmin && homeExpanded && (
+            <div
+              className={"sidebar-nav-item" + (view === 'announcements' ? " active" : "")}
+              style={{paddingLeft:34, fontSize:14}}
+              onClick={() => goToAdminOnlyView('announcements')}
+            >
+              <span>📢</span> 공지사항
+            </div>
+          )}
           {isAdmin && (
             <>
               <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => goToAdminOnlyView('checklist')}>
@@ -918,6 +943,10 @@ export default function Dashboard() {
 
       {view === 'home' && (
         <HomePanel displayName={displayName} userEmail={userEmail} isAdmin={isAdmin} goTo={goTo} />
+      )}
+
+      {view === 'announcements' && isAdmin && (
+        <AnnouncementsPanel isAdmin={isAdmin} />
       )}
 
       {view === 'checklist' && isAdmin && (

@@ -309,9 +309,6 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
               <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}>📎</span>}</div>
               <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
             </div>
-            <div className="item-actions">
-              <span className="icon-btn">보기 →</span>
-            </div>
           </div>
         ))}
       </div>

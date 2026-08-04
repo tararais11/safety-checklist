@@ -179,8 +179,15 @@ export default function AnnouncementsPanel({ isAdmin }) {
           </label>
         </div>
 
-        <div style={{display:'flex', gap:10}}>
-          <button className="auth-submit" style={{width:'auto', padding:'11px 26px'}} onClick={saveAnnouncement} disabled={posting}>
+        <div style={{display:'flex', justifyContent:'flex-end', gap:10}}>
+          <button
+            onClick={saveAnnouncement}
+            disabled={posting}
+            style={{
+              padding:'11px 26px', background:'var(--ink)', color:'#fff',
+              border:'2px solid var(--ink)', borderRadius:4, fontSize:14, fontWeight:700, cursor:'pointer',
+            }}
+          >
             {posting ? '저장 중...' : (editingId ? '수정 완료' : '등록하기')}
           </button>
           <button

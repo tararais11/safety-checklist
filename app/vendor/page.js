@@ -179,8 +179,20 @@ export default function VendorPage() {
   return (
     <div className="app-shell">
       <div className="topbar-global">
-        <div className="topbar-global-brand">
-          <img src="/logo.gif" alt="회사 로고" style={{height:38, marginRight:4}} />
+        <div className="topbar-global-brand" style={{cursor:'pointer'}} onClick={() => { setView('home'); setOpenEval(null); }}>
+          <img
+            src="/logo.gif"
+            alt="회사 로고"
+            style={{height:38, marginRight:4}}
+            onError={e => {
+              if (!e.currentTarget.dataset.retried) {
+                e.currentTarget.dataset.retried = '1';
+                e.currentTarget.src = '/logo.gif?retry=' + Date.now();
+              } else {
+                e.currentTarget.style.display = 'none';
+              }
+            }}
+          />
           <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
         </div>
         <div className="topbar-global-right">

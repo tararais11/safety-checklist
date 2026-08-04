@@ -756,7 +756,11 @@ export default function Dashboard() {
   };
 
   const ADMIN_ONLY_VIEWS = ['checklist', 'yearly', 'adminUsers', 'evalCreate', 'evalReview'];
-  const goTo = (targetView) => {
+  const [openAnnouncementId, setOpenAnnouncementId] = useState(null);
+  const goTo = (targetView, payload) => {
+    if (targetView === 'announcements') {
+      setOpenAnnouncementId(payload || null);
+    }
     if (ADMIN_ONLY_VIEWS.includes(targetView)) {
       goToAdminOnlyView(targetView);
     } else {
@@ -808,7 +812,19 @@ export default function Dashboard() {
     <div className="app-shell">
       <div className="topbar-global">
         <div className="topbar-global-brand">
-          <img src="/logo.gif" alt="회사 로고" style={{height:38, marginRight:4}} />
+          <img
+            src="/logo.gif"
+            alt="회사 로고"
+            style={{height:38, marginRight:4}}
+            onError={e => {
+              if (!e.currentTarget.dataset.retried) {
+                e.currentTarget.dataset.retried = '1';
+                e.currentTarget.src = '/logo.gif?retry=' + Date.now();
+              } else {
+                e.currentTarget.style.display = 'none';
+              }
+            }}
+          />
           <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
         </div>
         <div className="topbar-global-right">
@@ -946,7 +962,7 @@ export default function Dashboard() {
       )}
 
       {view === 'announcements' && (
-        <AnnouncementsPanel isAdmin={isAdmin} />
+        <AnnouncementsPanel isAdmin={isAdmin} openAnnouncementId={openAnnouncementId} />
       )}
 
       {view === 'checklist' && isAdmin && (

@@ -84,7 +84,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
 
           {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
           {announcements.map(a => (
-            <div className="item" key={a.id} style={{cursor:'pointer'}} onClick={() => goTo('announcements')}>
+            <div className="item" key={a.id} style={{cursor:'pointer'}} onClick={() => goTo('announcements', a.id)}>
               <div className="item-body">
                 <div className="item-name">{a.title}</div>
                 <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>

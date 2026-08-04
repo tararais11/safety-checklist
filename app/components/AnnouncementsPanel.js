@@ -20,6 +20,8 @@ export default function AnnouncementsPanel({ isAdmin }) {
   const [editingId, setEditingId] = useState(null);
 
   const [signedUrl, setSignedUrl] = useState(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,6 +93,7 @@ export default function AnnouncementsPanel({ isAdmin }) {
       if (error) { alert('등록 실패: ' + error.message); return; }
       setAnnouncements(prev => [data[0], ...prev]);
       resetForm();
+      setPage(1);
       setMode('list');
     }
   };
@@ -258,38 +261,62 @@ export default function AnnouncementsPanel({ isAdmin }) {
   }
 
   // 목록 화면 (기본)
+  const totalPages = Math.max(1, Math.ceil(announcements.length / PAGE_SIZE));
+  const pageItems = announcements.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
-    <div className="panel">
+    <>
       {isAdmin && (
-        <div className="panel-head" style={{justifyContent:'flex-end'}}>
+        <div style={{display:'flex', justifyContent:'flex-end', marginBottom:14}}>
           <button className="add-btn" onClick={() => { resetForm(); setMode('write'); }}>+ 글쓰기</button>
         </div>
       )}
 
-      {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
+      <div className="panel">
+        {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
 
-      {announcements.map((a, idx) => (
-        <div
-          className="item"
-          key={a.id}
-          style={{cursor:'pointer'}}
-          onClick={() => { setSelected(a); setMode('detail'); }}
-        >
-          <div style={{
-            width:32, flexShrink:0, textAlign:'center', color:'var(--muted)', fontSize:13, fontWeight:700,
-            alignSelf:'center',
-          }}>
-            {announcements.length - idx}
+        {pageItems.map((a, idx) => (
+          <div
+            className="item"
+            key={a.id}
+            style={{cursor:'pointer'}}
+            onClick={() => { setSelected(a); setMode('detail'); }}
+          >
+            <div style={{
+              width:32, flexShrink:0, textAlign:'center', color:'var(--muted)', fontSize:13, fontWeight:700,
+              alignSelf:'center',
+            }}>
+              {announcements.length - ((page - 1) * PAGE_SIZE + idx)}
+            </div>
+            <div className="item-body">
+              <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}>📎</span>}</div>
+              <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
+            </div>
+            <div className="item-actions">
+              <span className="icon-btn">보기 →</span>
+            </div>
           </div>
-          <div className="item-body">
-            <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}>📎</span>}</div>
-            <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
-          </div>
-          <div className="item-actions">
-            <span className="icon-btn">보기 →</span>
-          </div>
+        ))}
+      </div>
+
+      {totalPages > 1 && (
+        <div style={{display:'flex', justifyContent:'center', gap:6, marginTop:16}}>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button
+              key={p}
+              onClick={() => setPage(p)}
+              style={{
+                width:32, height:32, borderRadius:6, border:'1px solid var(--line)',
+                background: p === page ? 'var(--ink)' : '#fff',
+                color: p === page ? '#fff' : 'var(--ink)',
+                fontWeight:700, fontSize:13, cursor:'pointer',
+              }}
+            >
+              {p}
+            </button>
+          ))}
         </div>
-      ))}
-    </div>
+      )}
+    </>
   );
 }

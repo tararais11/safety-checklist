@@ -2,8 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { createClient } from '../lib/supabase/client';
 import AdminUsersPanel from './components/AdminUsersPanel';
 import AdminEvalCreatePanel from './components/AdminEvalCreatePanel';
@@ -434,9 +434,11 @@ function isPdfFile(name) {
   return /\.pdf$/i.test(name || '');
 }
 
-export default function Dashboard() {
+function DashboardInner() {
   const supabase = createClient();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -455,7 +457,21 @@ export default function Dashboard() {
   const [signedUrls, setSignedUrls] = useState({}); // path -> signed url
   const [active, setActive] = useState('daily');
   const [activeLawCategory, setActiveLawCategory] = useState(null); // set on first render from LAW_INDEX keys
-  const [view, setView] = useState('home'); // 'home' | 'checklist' | 'lawsearch' | 'yearly' | 'templates' | ...
+  const [view, setView] = useState(() => searchParams.get('view') || 'home');
+  const [openAnnouncementId, setOpenAnnouncementId] = useState(() => searchParams.get('id') || null);
+  const isInternalNav = useRef(false);
+
+  // 브라우저 뒤로가기/앞으로가기로 URL이 바뀌면 화면 상태를 맞춰줘요
+  useEffect(() => {
+    if (isInternalNav.current) {
+      isInternalNav.current = false;
+      return;
+    }
+    const urlView = searchParams.get('view') || 'home';
+    const urlId = searchParams.get('id');
+    setView(urlView);
+    setOpenAnnouncementId(urlView === 'announcements' ? urlId : null);
+  }, [searchParams]);
   const [homeExpanded, setHomeExpanded] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [yearlyPeriod, setYearlyPeriod] = useState('daily');
@@ -478,7 +494,16 @@ export default function Dashboard() {
     const adminFlag = profile?.role === 'admin';
     setIsAdmin(adminFlag);
     if (!adminFlag) {
-      setView(v => (v === 'checklist' || v === 'yearly') ? 'lawsearch' : v);
+      setView(v => {
+        if (v === 'checklist' || v === 'yearly') {
+          const params = new URLSearchParams();
+          params.set('view', 'lawsearch');
+          isInternalNav.current = true;
+          router.replace(`${pathname}?${params.toString()}`);
+          return 'lawsearch';
+        }
+        return v;
+      });
     }
 
     let { data: itemRows, error: itemErr } = await supabase
@@ -744,7 +769,18 @@ export default function Dashboard() {
     router.refresh();
   };
 
-  const goToAdminOnlyView = async (targetView) => {
+  const navigate = (targetView, opts = {}) => {
+    isInternalNav.current = true;
+    setView(targetView);
+    setOpenAnnouncementId(targetView === 'announcements' ? (opts.id || null) : null);
+    const params = new URLSearchParams();
+    params.set('view', targetView);
+    if (opts.id) params.set('id', opts.id);
+    const url = `${pathname}?${params.toString()}`;
+    if (opts.replace) router.replace(url); else router.push(url);
+  };
+
+  const goToAdminOnlyView = async (targetView, opts = {}) => {
     const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
     if (profile?.role !== 'admin') {
@@ -752,19 +788,16 @@ export default function Dashboard() {
       window.location.reload();
       return;
     }
-    setView(targetView);
+    navigate(targetView, opts);
   };
 
   const ADMIN_ONLY_VIEWS = ['checklist', 'yearly', 'adminUsers', 'evalCreate', 'evalReview'];
-  const [openAnnouncementId, setOpenAnnouncementId] = useState(null);
   const goTo = (targetView, payload) => {
-    if (targetView === 'announcements') {
-      setOpenAnnouncementId(payload || null);
-    }
+    const opts = targetView === 'announcements' ? { id: payload } : {};
     if (ADMIN_ONLY_VIEWS.includes(targetView)) {
-      goToAdminOnlyView(targetView);
+      goToAdminOnlyView(targetView, opts);
     } else {
-      setView(targetView);
+      navigate(targetView, opts);
     }
   };
 
@@ -889,7 +922,7 @@ export default function Dashboard() {
           <div
             className={"sidebar-nav-item" + (view === 'home' ? " active" : "")}
             style={{justifyContent:'space-between'}}
-            onClick={() => setView('home')}
+            onClick={() => navigate('home')}
           >
             <span><span style={{marginRight:10}}>🏠</span>홈</span>
             {isAdmin && (
@@ -920,10 +953,10 @@ export default function Dashboard() {
               </div>
             </>
           )}
-          <div className={"sidebar-nav-item" + (view === 'lawsearch' ? " active" : "")} onClick={() => setView('lawsearch')}>
+          <div className={"sidebar-nav-item" + (view === 'lawsearch' ? " active" : "")} onClick={() => navigate('lawsearch')}>
             <span>⚖️</span> 법령검색
           </div>
-          <div className={"sidebar-nav-item" + (view === 'templates' ? " active" : "")} onClick={() => setView('templates')}>
+          <div className={"sidebar-nav-item" + (view === 'templates' ? " active" : "")} onClick={() => navigate('templates')}>
             <span>📁</span> 양식함
           </div>
           {isAdmin && (
@@ -1319,5 +1352,13 @@ export default function Dashboard() {
       </main>
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<div className="app-shell"><div className="main-content"><div className="content-inner"><div className="empty">불러오는 중...</div></div></div></div>}>
+      <DashboardInner />
+    </Suspense>
   );
 }

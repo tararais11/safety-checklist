@@ -21,6 +21,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
     const { data } = await supabase
       .from('announcements')
       .select('*')
+      .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(5);
     setAnnouncements(data || []);
@@ -86,7 +87,7 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
           {announcements.map(a => (
             <div className="item" key={a.id} style={{cursor:'pointer'}} onClick={() => goTo('announcements', a.id)}>
               <div className="item-body">
-                <div className="item-name">{a.title}</div>
+                <div className="item-name">{a.pinned && '📌 '}{a.title}</div>
                 <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
               </div>
             </div>

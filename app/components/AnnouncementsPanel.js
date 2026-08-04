@@ -28,6 +28,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
     const { data } = await supabase
       .from('announcements')
       .select('*')
+      .order('pinned', { ascending: false })
       .order('created_at', { ascending: false });
     setAnnouncements(data || []);
     setLoading(false);
@@ -130,6 +131,24 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
     setMode(goBackTo);
   };
 
+  const togglePin = async (a) => {
+    const nextPinned = !a.pinned;
+    const { data, error } = await supabase
+      .from('announcements')
+      .update({ pinned: nextPinned })
+      .eq('id', a.id)
+      .select();
+    if (error) { alert('고정 설정 실패: ' + error.message); return; }
+    setAnnouncements(prev => {
+      const updated = prev.map(x => x.id === a.id ? data[0] : x);
+      return [...updated].sort((x, y) => {
+        if (x.pinned !== y.pinned) return x.pinned ? -1 : 1;
+        return new Date(y.created_at) - new Date(x.created_at);
+      });
+    });
+    setSelected(data[0]);
+  };
+
   const deleteAnnouncement = async (id) => {
     if (!confirm('이 공지사항을 삭제할까요?')) return;
     const target = announcements.find(a => a.id === id);
@@ -230,7 +249,10 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
 
         <div className="panel">
           <div style={{borderBottom:'2px solid var(--ink)', paddingBottom:14, marginBottom:16}}>
-            <div style={{fontSize:19, fontWeight:800, marginBottom:8}}>{selected.title}</div>
+            <div style={{fontSize:19, fontWeight:800, marginBottom:8}}>
+              {selected.pinned && <span style={{color:'var(--safety)', marginRight:6}}>📌 고정</span>}
+              {selected.title}
+            </div>
             <div style={{fontSize:12, color:'var(--muted)'}}>{new Date(selected.created_at).toLocaleDateString('ko-KR')}</div>
           </div>
           <div style={{fontSize:14.5, lineHeight:1.8, whiteSpace:'pre-wrap', minHeight:120}}>
@@ -252,6 +274,16 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
 
           {isAdmin && (
             <div style={{marginTop:28, display:'flex', justifyContent:'flex-end', gap:10}}>
+              <button
+                onClick={() => togglePin(selected)}
+                style={{
+                  padding:'11px 22px', background: selected.pinned ? 'var(--safety)' : '#fff',
+                  color: selected.pinned ? '#fff' : 'var(--ink)',
+                  border:'2px solid ' + (selected.pinned ? 'var(--safety)' : 'var(--ink)'), borderRadius:6, fontSize:13.5, fontWeight:700, cursor:'pointer',
+                }}
+              >
+                {selected.pinned ? '📌 고정 해제' : '📌 상단 고정'}
+              </button>
               <button
                 onClick={() => startEdit(selected)}
                 style={{
@@ -278,8 +310,10 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
   }
 
   // 목록 화면 (기본)
-  const totalPages = Math.max(1, Math.ceil(announcements.length / PAGE_SIZE));
-  const pageItems = announcements.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pinnedItems = announcements.filter(a => a.pinned);
+  const regularItems = announcements.filter(a => !a.pinned);
+  const totalPages = Math.max(1, Math.ceil(regularItems.length / PAGE_SIZE));
+  const pageItems = regularItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <>
@@ -292,6 +326,26 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
       <div className="panel">
         {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
 
+        {pinnedItems.map(a => (
+          <div
+            className="item"
+            key={a.id}
+            style={{cursor:'pointer', background:'#fdecc8'}}
+            onClick={() => { setSelected(a); setMode('detail'); }}
+          >
+            <div style={{
+              width:32, flexShrink:0, textAlign:'center', fontSize:15,
+              alignSelf:'center',
+            }}>
+              📌
+            </div>
+            <div className="item-body">
+              <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}>📎</span>}</div>
+              <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
+            </div>
+          </div>
+        ))}
+
         {pageItems.map((a, idx) => (
           <div
             className="item"
@@ -303,7 +357,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
               width:32, flexShrink:0, textAlign:'center', color:'var(--muted)', fontSize:13, fontWeight:700,
               alignSelf:'center',
             }}>
-              {announcements.length - ((page - 1) * PAGE_SIZE + idx)}
+              {regularItems.length - ((page - 1) * PAGE_SIZE + idx)}
             </div>
             <div className="item-body">
               <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}>📎</span>}</div>

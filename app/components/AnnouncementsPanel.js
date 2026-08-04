@@ -13,8 +13,13 @@ export default function AnnouncementsPanel({ isAdmin }) {
 
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
+  const [newFile, setNewFile] = useState(null); // 새로 선택한 파일 (업로드 전)
+  const [existingFile, setExistingFile] = useState(null); // 수정 중 기존 첨부파일 {file_url, file_name}
+  const [removeExistingFile, setRemoveExistingFile] = useState(false);
   const [posting, setPosting] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  const [signedUrl, setSignedUrl] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -28,53 +33,96 @@ export default function AnnouncementsPanel({ isAdmin }) {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (mode === 'detail' && selected?.file_url) {
+      supabase.storage.from('announcement-files').createSignedUrl(selected.file_url, 3600)
+        .then(({ data }) => setSignedUrl(data?.signedUrl || null));
+    } else {
+      setSignedUrl(null);
+    }
+  }, [mode, selected, supabase]);
+
   const saveAnnouncement = async () => {
     if (!newTitle.trim()) return;
     const confirmMsg = editingId ? '수정하시겠습니까?' : '등록하시겠습니까?';
     if (!confirm(confirmMsg)) return;
     setPosting(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // 파일 처리: 새 파일이 있으면 업로드, 기존 파일 제거 요청이면 지움
+    let file_url = editingId ? (removeExistingFile ? null : existingFile?.file_url || null) : null;
+    let file_name = editingId ? (removeExistingFile ? null : existingFile?.file_name || null) : null;
+
+    if (newFile) {
+      const extMatch = newFile.name.match(/\.([a-zA-Z0-9]+)$/);
+      const ext = extMatch ? extMatch[1] : 'dat';
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('announcement-files').upload(path, newFile);
+      if (upErr) { setPosting(false); alert('파일 업로드 실패: ' + upErr.message); return; }
+      // 기존 파일이 있었고 새 파일로 교체하는 거면 예전 파일 삭제
+      if (editingId && existingFile?.file_url) {
+        await supabase.storage.from('announcement-files').remove([existingFile.file_url]);
+      }
+      file_url = path;
+      file_name = newFile.name;
+    } else if (editingId && removeExistingFile && existingFile?.file_url) {
+      await supabase.storage.from('announcement-files').remove([existingFile.file_url]);
+    }
+
     if (editingId) {
       const { data, error } = await supabase
         .from('announcements')
-        .update({ title: newTitle.trim(), content: newContent.trim() })
+        .update({ title: newTitle.trim(), content: newContent.trim(), file_url, file_name })
         .eq('id', editingId)
         .select();
       setPosting(false);
       if (error) { alert('수정 실패: ' + error.message); return; }
       setAnnouncements(prev => prev.map(a => a.id === editingId ? data[0] : a));
       setSelected(data[0]);
-      setEditingId(null);
-      setNewTitle(''); setNewContent('');
+      resetForm();
       setMode('detail');
     } else {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('announcements')
-        .insert({ admin_id: user.id, title: newTitle.trim(), content: newContent.trim() })
+        .insert({ admin_id: user.id, title: newTitle.trim(), content: newContent.trim(), file_url, file_name })
         .select();
       setPosting(false);
       if (error) { alert('등록 실패: ' + error.message); return; }
       setAnnouncements(prev => [data[0], ...prev]);
-      setNewTitle(''); setNewContent('');
+      resetForm();
       setMode('list');
     }
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setNewTitle(''); setNewContent('');
+    setNewFile(null); setExistingFile(null); setRemoveExistingFile(false);
   };
 
   const startEdit = (a) => {
     setEditingId(a.id);
     setNewTitle(a.title);
     setNewContent(a.content || '');
+    setExistingFile(a.file_url ? { file_url: a.file_url, file_name: a.file_name } : null);
+    setNewFile(null);
+    setRemoveExistingFile(false);
     setMode('write');
   };
 
   const cancelWrite = () => {
-    setEditingId(null);
-    setNewTitle(''); setNewContent('');
-    setMode(selected ? 'detail' : 'list');
+    const goBackTo = selected ? 'detail' : 'list';
+    resetForm();
+    setMode(goBackTo);
   };
 
   const deleteAnnouncement = async (id) => {
     if (!confirm('이 공지사항을 삭제할까요?')) return;
+    const target = announcements.find(a => a.id === id);
+    if (target?.file_url) {
+      await supabase.storage.from('announcement-files').remove([target.file_url]);
+    }
     await supabase.from('announcements').delete().eq('id', id);
     setAnnouncements(prev => prev.filter(a => a.id !== id));
     setMode('list');
@@ -101,6 +149,33 @@ export default function AnnouncementsPanel({ isAdmin }) {
           rows={10}
           style={{width:'100%', marginBottom:14, padding:'12px', border:'1px solid var(--line)', borderRadius:4, fontSize:14, fontFamily:'inherit', resize:'vertical', lineHeight:1.6}}
         />
+
+        <div style={{marginBottom:18, padding:'12px 14px', background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4}}>
+          <div style={{fontSize:12, fontWeight:700, color:'var(--muted)', marginBottom:8}}>첨부파일 (선택)</div>
+
+          {existingFile && !removeExistingFile && !newFile && (
+            <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:8}}>
+              <span style={{fontSize:13}}>📎 {existingFile.file_name}</span>
+              <button className="icon-btn" onClick={() => setRemoveExistingFile(true)}>제거</button>
+            </div>
+          )}
+          {removeExistingFile && (
+            <div style={{fontSize:12.5, color:'var(--muted)', marginBottom:8}}>기존 파일이 제거될 예정이에요.</div>
+          )}
+          {newFile && (
+            <div style={{fontSize:13, marginBottom:8}}>📎 {newFile.name} <span style={{color:'var(--safety)'}}>(새 파일)</span></div>
+          )}
+
+          <label className="add-btn" style={{cursor:'pointer', display:'inline-block', fontSize:12}}>
+            {existingFile || newFile ? '파일 교체' : '+ 파일 첨부'}
+            <input
+              type="file"
+              style={{display:'none'}}
+              onChange={e => { if (e.target.files[0]) { setNewFile(e.target.files[0]); setRemoveExistingFile(false); } }}
+            />
+          </label>
+        </div>
+
         <div style={{display:'flex', gap:10}}>
           <button className="auth-submit" style={{width:'auto', padding:'11px 26px'}} onClick={saveAnnouncement} disabled={posting}>
             {posting ? '저장 중...' : (editingId ? '수정 완료' : '등록하기')}
@@ -122,7 +197,7 @@ export default function AnnouncementsPanel({ isAdmin }) {
   // 상세보기 화면
   if (mode === 'detail' && selected) {
     return (
-      <div className="panel">
+      <>
         <button
           onClick={() => { setMode('list'); setSelected(null); }}
           style={{
@@ -132,20 +207,53 @@ export default function AnnouncementsPanel({ isAdmin }) {
         >
           ← 목록으로
         </button>
-        <div style={{borderBottom:'2px solid var(--ink)', paddingBottom:14, marginBottom:16}}>
-          <div style={{fontSize:19, fontWeight:800, marginBottom:8}}>{selected.title}</div>
-          <div style={{fontSize:12, color:'var(--muted)'}}>{new Date(selected.created_at).toLocaleDateString('ko-KR')}</div>
-        </div>
-        <div style={{fontSize:14.5, lineHeight:1.8, whiteSpace:'pre-wrap', minHeight:120}}>
-          {selected.content || <span style={{color:'var(--muted)'}}>내용이 없어요.</span>}
-        </div>
-        {isAdmin && (
-          <div style={{marginTop:24, display:'flex', gap:10}}>
-            <button className="icon-btn" onClick={() => startEdit(selected)}>수정</button>
-            <button className="icon-btn" style={{color:'var(--warn)'}} onClick={() => deleteAnnouncement(selected.id)}>삭제</button>
+
+        <div className="panel">
+          <div style={{borderBottom:'2px solid var(--ink)', paddingBottom:14, marginBottom:16}}>
+            <div style={{fontSize:19, fontWeight:800, marginBottom:8}}>{selected.title}</div>
+            <div style={{fontSize:12, color:'var(--muted)'}}>{new Date(selected.created_at).toLocaleDateString('ko-KR')}</div>
           </div>
-        )}
-      </div>
+          <div style={{fontSize:14.5, lineHeight:1.8, whiteSpace:'pre-wrap', minHeight:120}}>
+            {selected.content || <span style={{color:'var(--muted)'}}>내용이 없어요.</span>}
+          </div>
+
+          {selected.file_url && (
+            <div style={{marginTop:20, padding:'12px 14px', background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4}}>
+              <span style={{fontSize:13.5}}>📎 {selected.file_name}</span>{' '}
+              {signedUrl ? (
+                <a href={signedUrl} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)', fontSize:13.5}}>
+                  열어서 보기 ↗
+                </a>
+              ) : (
+                <span style={{fontSize:12.5, color:'var(--muted)'}}>링크 불러오는 중...</span>
+              )}
+            </div>
+          )}
+
+          {isAdmin && (
+            <div style={{marginTop:28, display:'flex', justifyContent:'flex-end', gap:10}}>
+              <button
+                onClick={() => startEdit(selected)}
+                style={{
+                  padding:'11px 22px', background:'#fff', color:'var(--ink)',
+                  border:'2px solid var(--ink)', borderRadius:6, fontSize:13.5, fontWeight:700, cursor:'pointer',
+                }}
+              >
+                수정
+              </button>
+              <button
+                onClick={() => deleteAnnouncement(selected.id)}
+                style={{
+                  padding:'11px 22px', background:'var(--warn)', color:'#fff',
+                  border:'none', borderRadius:6, fontSize:13.5, fontWeight:700, cursor:'pointer',
+                }}
+              >
+                삭제
+              </button>
+            </div>
+          )}
+        </div>
+      </>
     );
   }
 
@@ -154,7 +262,7 @@ export default function AnnouncementsPanel({ isAdmin }) {
     <div className="panel">
       {isAdmin && (
         <div className="panel-head" style={{justifyContent:'flex-end'}}>
-          <button className="add-btn" onClick={() => { setEditingId(null); setNewTitle(''); setNewContent(''); setMode('write'); }}>+ 글쓰기</button>
+          <button className="add-btn" onClick={() => { resetForm(); setMode('write'); }}>+ 글쓰기</button>
         </div>
       )}
 
@@ -174,7 +282,7 @@ export default function AnnouncementsPanel({ isAdmin }) {
             {announcements.length - idx}
           </div>
           <div className="item-body">
-            <div className="item-name">{a.title}</div>
+            <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}>📎</span>}</div>
             <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
           </div>
           <div className="item-actions">

@@ -844,7 +844,7 @@ function DashboardInner() {
   return (
     <div className="app-shell">
       <div className="topbar-global">
-        <div className="topbar-global-brand">
+        <div className="topbar-global-brand" style={{cursor:'pointer'}} onClick={() => navigate('home')}>
           <img
             src="/logo.gif"
             alt="회사 로고"

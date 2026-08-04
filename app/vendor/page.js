@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
+import AnnouncementsPanel from '../components/AnnouncementsPanel';
 
 const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
 
@@ -25,9 +26,10 @@ export default function VendorPage() {
   const [companyName, setCompanyName] = useState('');
   const [evaluations, setEvaluations] = useState([]);
 
-  const [view, setView] = useState('home'); // 'home' | 'inprogress' | 'results'
+  const [view, setView] = useState('home'); // 'home' | 'inprogress' | 'results' | 'announcements'
   const [openEval, setOpenEval] = useState(null);
   const [showSubmittedDetail, setShowSubmittedDetail] = useState(false);
+  const [openAnnouncementId, setOpenAnnouncementId] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
   const [rows, setRows] = useState([]);
   const [signedUrls, setSignedUrls] = useState({});
@@ -53,6 +55,7 @@ export default function VendorPage() {
     const { data: ann } = await supabase
       .from('announcements')
       .select('*')
+      .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(5);
     setAnnouncements(ann || []);
@@ -208,6 +211,9 @@ export default function VendorPage() {
           <nav>
             <div className={"sidebar-nav-item" + (view === 'home' && !openEval ? " active" : "")} onClick={() => { setView('home'); setOpenEval(null); }}>
               <span>🏠</span> 홈
+            </div>
+            <div className={"sidebar-nav-item" + (view === 'announcements' && !openEval ? " active" : "")} onClick={() => { setOpenAnnouncementId(null); setView('announcements'); setOpenEval(null); }}>
+              <span>📢</span> 공지사항
             </div>
             <div className={"sidebar-nav-item" + (view === 'inprogress' && !openEval ? " active" : "")} onClick={() => { setView('inprogress'); setOpenEval(null); }}>
               <span>📝</span> 평가진행
@@ -396,12 +402,13 @@ export default function VendorPage() {
                   <div className="panel">
                     <div className="panel-head">
                       <h2>공지사항</h2>
+                      <span className="icon-btn" style={{cursor:'pointer'}} onClick={() => { setOpenAnnouncementId(null); setView('announcements'); }}>더보기 →</span>
                     </div>
                     {announcements.length === 0 && <div className="empty">등록된 공지사항이 없어요.</div>}
                     {announcements.map(a => (
-                      <div className="item" key={a.id}>
+                      <div className="item" key={a.id} style={{cursor:'pointer'}} onClick={() => { setOpenAnnouncementId(a.id); setView('announcements'); }}>
                         <div className="item-body">
-                          <div className="item-name">{a.title}</div>
+                          <div className="item-name">{a.pinned && '📌 '}{a.title}</div>
                           <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
                         </div>
                       </div>
@@ -429,6 +436,17 @@ export default function VendorPage() {
                     ))}
                   </div>
                 </div>
+              </>
+            ) : view === 'announcements' ? (
+              <>
+                <div className="masthead">
+                  <div>
+                    <h1>공지사항</h1>
+                    <div className="sub">회사 공지사항을 확인하세요</div>
+                  </div>
+                </div>
+                <div className="stripe"></div>
+                <AnnouncementsPanel isAdmin={false} openAnnouncementId={openAnnouncementId} />
               </>
             ) : (
               <>

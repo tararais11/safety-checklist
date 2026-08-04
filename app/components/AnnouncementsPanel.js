@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '../../lib/supabase/client';
 
-export default function AnnouncementsPanel({ isAdmin }) {
+export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
   const supabase = createClient();
 
   const [announcements, setAnnouncements] = useState([]);
@@ -34,6 +34,16 @@ export default function AnnouncementsPanel({ isAdmin }) {
   }, [supabase]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (openAnnouncementId && announcements.length > 0) {
+      const target = announcements.find(a => a.id === openAnnouncementId);
+      if (target) {
+        setSelected(target);
+        setMode('detail');
+      }
+    }
+  }, [openAnnouncementId, announcements]);
 
   useEffect(() => {
     if (mode === 'detail' && selected?.file_url) {

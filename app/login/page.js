@@ -62,7 +62,7 @@ export default function LoginPage() {
           zIndex:200, color:'#fff', gap:14,
         }}>
           <div style={{
-            width:40, height:40, border:'4px solid rgba(255,255,255,0.25)', borderTopColor:'#ff8a4c',
+            width:40, height:40, border:'4px solid rgba(255,255,255,0.25)', borderTopColor:'#e8555a',
             borderRadius:'50%', animation:'auth-spin 0.8s linear infinite',
           }}></div>
           <div style={{fontSize:14.5, fontWeight:700}}>로그인 중입니다...</div>
@@ -71,7 +71,19 @@ export default function LoginPage() {
       <style>{`@keyframes auth-spin { to { transform: rotate(360deg); } }`}</style>
       <div className="auth-card">
         <div style={{textAlign:'center', marginBottom:10}}>
-          <img src="/logo.gif" alt="회사 로고" style={{height:56}} />
+          <img
+            src="/logo.gif"
+            alt="회사 로고"
+            style={{height:56}}
+            onError={e => {
+              if (!e.currentTarget.dataset.retried) {
+                e.currentTarget.dataset.retried = '1';
+                e.currentTarget.src = '/logo.gif?retry=' + Date.now();
+              } else {
+                e.currentTarget.style.display = 'none';
+              }
+            }}
+          />
         </div>
         <div className="auth-logo">안전보건 통합관리시스템</div>
         <div className="auth-sub">산업안전보건법 · 중대재해처벌법 대응 관리</div>

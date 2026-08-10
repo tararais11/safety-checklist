@@ -6,7 +6,7 @@ import { createClient } from '../../lib/supabase/client';
 const statusLabel = { pending: '대기중', submitted: '제출완료', reviewed: '검토완료' };
 
 const printTh = {
-  border:'1px solid #1c2230', padding:'7px 9px', background:'#1c2230', color:'#ffffff',
+  border:'1px solid #231f20', padding:'7px 9px', background:'#231f20', color:'#ffffff',
   textAlign:'left', fontSize:11.5, WebkitPrintColorAdjust:'exact', printColorAdjust:'exact',
 };
 const printTd = { border:'1px solid #c9c2ad', padding:'6px 9px', verticalAlign:'top', fontSize:11.5 };
@@ -194,12 +194,12 @@ export default function AdminEvalReviewPanel() {
 
         {/* 인쇄/PDF 저장 전용 리포트 — 화면에는 안 보이고 인쇄할 때만 나타나요 */}
         <div className="print-report">
-          <div style={{borderBottom:'4px solid #c2410c', paddingBottom:10, marginBottom:14}}>
-            <div style={{fontSize:10, letterSpacing:'0.12em', color:'#c2410c', fontWeight:700, marginBottom:4}}>SAFETY &amp; HEALTH EVALUATION REPORT</div>
-            <h1 style={{fontSize:21, marginBottom:2, color:'#1c2230'}}>{openEval.eval_templates?.title}</h1>
+          <div style={{borderBottom:'4px solid #b10208', paddingBottom:10, marginBottom:14}}>
+            <div style={{fontSize:10, letterSpacing:'0.12em', color:'#b10208', fontWeight:700, marginBottom:4}}>SAFETY &amp; HEALTH EVALUATION REPORT</div>
+            <h1 style={{fontSize:21, marginBottom:2, color:'#231f20'}}>{openEval.eval_templates?.title}</h1>
           </div>
           <div style={{fontSize:12, color:'#555', marginBottom:16}}>
-            평가업체: <b style={{color:'#1c2230'}}>{vendorLabel}</b> &nbsp;|&nbsp; 평가기간: {openEval.period_start} ~ {openEval.period_end} &nbsp;|&nbsp; 상태: <b style={{color:'#c2410c'}}>{statusLabel[openEval.status]}</b>
+            평가업체: <b style={{color:'#231f20'}}>{vendorLabel}</b> &nbsp;|&nbsp; 평가기간: {openEval.period_start} ~ {openEval.period_end} &nbsp;|&nbsp; 상태: <b style={{color:'#b10208'}}>{statusLabel[openEval.status]}</b>
           </div>
           {openEval.eval_templates?.legal_basis && (
             <div style={{fontSize:12, marginBottom:12}}><b>평가근거:</b> {openEval.eval_templates.legal_basis}</div>

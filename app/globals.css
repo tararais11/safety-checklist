@@ -1,10 +1,10 @@
 :root{
-  --ink:#1c2230;
+  --ink:#231f20;
   --paper:#f2f0e9;
   --panel:#ffffff;
   --line:#dcd6c6;
-  --safety:#c2410c;
-  --safety-dim:#f4dcc9;
+  --safety:#b10208;
+  --safety-dim:#f4d4d2;
   --ok:#166534;
   --ok-bg:#dcf5df;
   --warn:#92400e;
@@ -59,7 +59,7 @@ body{
   border-left:3px solid transparent;
 }
 .sidebar-nav-item:hover{background:rgba(255,255,255,0.07);color:#fff;}
-.sidebar-nav-item.active{background:rgba(194,65,12,0.18);color:#fff;border-left-color:var(--safety);}
+.sidebar-nav-item.active{background:rgba(177,2,8,0.2);color:#fff;border-left-color:var(--safety);}
 .sidebar > nav{flex:1;}
 .sidebar-footer-menu{border-top:1px solid rgba(255,255,255,0.14);margin-top:8px;padding-top:8px;}
 

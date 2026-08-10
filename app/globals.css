@@ -4,6 +4,7 @@
   --panel:#ffffff;
   --line:#dcd6c6;
   --safety:#b10208;
+  --safety-dark:#5c2a34;
   --safety-dim:#f4d4d2;
   --ok:#166534;
   --ok-bg:#dcf5df;
@@ -47,7 +48,7 @@ body{
 
 .app-body{display:flex;flex:1;min-height:0;}
 .sidebar{
-  width:270px;flex-shrink:0;background:var(--safety);color:#fff;
+  width:270px;flex-shrink:0;background:var(--safety-dark);color:#fff;
   padding:16px 12px;
   position:sticky;top:74px;align-self:flex-start;
   height:calc(100vh - 74px);overflow-y:auto;
@@ -58,8 +59,8 @@ body{
   color:rgba(255,255,255,0.8);font-size:15.5px;font-weight:700;cursor:pointer;margin-bottom:4px;transition:all .15s;
   border-left:3px solid transparent;
 }
-.sidebar-nav-item:hover{background:rgba(0,0,0,0.14);color:#fff;}
-.sidebar-nav-item.active{background:rgba(0,0,0,0.28);color:#fff;border-left-color:#fff;}
+.sidebar-nav-item:hover{background:rgba(255,255,255,0.08);color:#fff;}
+.sidebar-nav-item.active{background:var(--safety);color:#fff;border-left-color:#fff;}
 .sidebar > nav{flex:1;}
 .sidebar-footer-menu{border-top:1px solid rgba(255,255,255,0.3);margin-top:8px;padding-top:8px;}
 

@@ -123,11 +123,6 @@ export default function HomePanel({ displayName, userEmail, isAdmin, goTo }) {
                   <span className={"badge " + (ev.status === 'submitted' ? 'ok' : 'warn')}>{statusLabel[ev.status]}</span>
                 </div>
               </div>
-              {isAdmin && (
-                <div className="item-actions">
-                  <span className="icon-btn">보기 →</span>
-                </div>
-              )}
             </div>
           ))}
         </div>

@@ -60,7 +60,7 @@ body{
   border-left:3px solid transparent;
 }
 .sidebar-nav-item:hover{background:rgba(255,255,255,0.08);color:#fff;}
-.sidebar-nav-item.active{background:var(--safety);color:#fff;border-left-color:#fff;}
+.sidebar-nav-item.active{background:#6b0f14;color:#fff;border-left-color:#fff;}
 .sidebar > nav{flex:1;}
 .sidebar-footer-menu{border-top:1px solid rgba(255,255,255,0.3);margin-top:8px;padding-top:8px;}
 

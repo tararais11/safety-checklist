@@ -724,9 +724,13 @@ function DashboardInner() {
     const text = newItemText.trim();
     if (!text) return;
     const { data: { user } } = await supabase.auth.getUser();
+    const sameperiod = items.filter(i => i.period === active);
+    const nextOrder = sameperiod.length > 0
+      ? Math.max(...sameperiod.map(i => i.sort_order ?? 0)) + 1
+      : 0;
     const { data, error: insErr } = await supabase
       .from('checklist_items')
-      .insert({ period: active, name: text, user_id: user.id })
+      .insert({ period: active, name: text, user_id: user.id, sort_order: nextOrder })
       .select();
     if (!insErr && data) {
       setItems(prev => [...prev, ...data]);

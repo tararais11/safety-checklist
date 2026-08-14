@@ -452,6 +452,8 @@ function DashboardInner() {
   const [doneMap, setDoneMap] = useState({}); // itemId -> Set of cycleKeys done
   const [fileMap, setFileMap] = useState({}); // itemId -> { cycleKey: {path, name} }
   const [expandedItem, setExpandedItem] = useState(null); // item.id currently expanded
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editingItemText, setEditingItemText] = useState('');
   const [expandedYearlyItem, setExpandedYearlyItem] = useState(null); // item.id currently expanded in yearly view
   const [uploading, setUploading] = useState(null); // item.id currently uploading
   const [signedUrls, setSignedUrls] = useState({}); // path -> signed url
@@ -736,6 +738,29 @@ function DashboardInner() {
     if (!confirm(`"${name}" 항목을 삭제할까요? 완료 기록과 첨부파일도 함께 삭제되며 되돌릴 수 없습니다.`)) return;
     await supabase.from('checklist_items').delete().eq('id', id);
     setItems(prev => prev.filter(i => i.id !== id));
+  };
+
+  const startEditItem = (item) => {
+    setEditingItemId(item.id);
+    setEditingItemText(item.name);
+  };
+
+  const cancelEditItem = () => {
+    setEditingItemId(null);
+    setEditingItemText('');
+  };
+
+  const saveEditItem = async () => {
+    const text = editingItemText.trim();
+    if (!text) return;
+    const { error: updErr } = await supabase
+      .from('checklist_items')
+      .update({ name: text })
+      .eq('id', editingItemId);
+    if (updErr) { alert('수정 실패: ' + updErr.message); return; }
+    setItems(prev => prev.map(i => i.id === editingItemId ? { ...i, name: text } : i));
+    setEditingItemId(null);
+    setEditingItemText('');
   };
 
   const moveItem = async (item, direction) => {
@@ -1034,20 +1059,35 @@ function DashboardInner() {
                 <div key={item.id}>
                   <div className="item">
                     <div className={"check" + (isDone ? " done" : "")} onClick={() => toggleItem(item)}></div>
-                    <div className="item-body" style={{cursor:'pointer'}} onClick={async () => {
-                      if (isOpen) { setExpandedItem(null); return; }
-                      setExpandedItem(item.id);
-                      if (evidence) await getSignedUrl(evidence.path);
-                    }}>
-                      <div className={"item-name" + (isDone ? " done" : "")}>{item.name}</div>
-                      <div className="item-meta">
-                        {isDone ? <span className="badge ok">완료</span> : <span className="badge warn">미완료</span>}
-                        {evidence && <span style={{marginLeft:6}}>📎 {evidence.name}</span>}
+                    {editingItemId === item.id ? (
+                      <div className="item-body" style={{display:'flex', gap:8, alignItems:'center'}}>
+                        <input
+                          value={editingItemText}
+                          onChange={e => setEditingItemText(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') saveEditItem(); if (e.key === 'Escape') cancelEditItem(); }}
+                          autoFocus
+                          style={{flex:1, padding:'8px 10px', border:'1px solid var(--line)', borderRadius:4, fontSize:14}}
+                        />
+                        <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={saveEditItem}>저장</button>
+                        <button className="icon-btn" onClick={cancelEditItem}>취소</button>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="item-body" style={{cursor:'pointer'}} onClick={async () => {
+                        if (isOpen) { setExpandedItem(null); return; }
+                        setExpandedItem(item.id);
+                        if (evidence) await getSignedUrl(evidence.path);
+                      }}>
+                        <div className={"item-name" + (isDone ? " done" : "")}>{item.name}</div>
+                        <div className="item-meta">
+                          {isDone ? <span className="badge ok">완료</span> : <span className="badge warn">미완료</span>}
+                          {evidence && <span style={{marginLeft:6}}>📎 {evidence.name}</span>}
+                        </div>
+                      </div>
+                    )}
                     <div className="item-actions">
                       <button className="icon-btn" onClick={() => moveItem(item, 'up')} disabled={idx === 0} title="위로" style={idx === 0 ? {opacity:0.3, cursor:'default'} : {}}>▲</button>
                       <button className="icon-btn" onClick={() => moveItem(item, 'down')} disabled={idx === periodItems.length - 1} title="아래로" style={idx === periodItems.length - 1 ? {opacity:0.3, cursor:'default'} : {}}>▼</button>
+                      <button className="icon-btn" onClick={() => startEditItem(item)} title="수정">✏️</button>
                       <button className="icon-btn" onClick={() => removeItem(item.id, item.name)} title="삭제">✕</button>
                     </div>
                   </div>

@@ -1377,10 +1377,6 @@ function DashboardInner() {
 
       {view === 'templates' && (
         <div className="panel">
-          <div className="panel-head">
-            <div className="cycle-label">위험성평가표, TBM일지 같은 빈 양식 파일을 올려두고 다운로드해서 쓰세요</div>
-          </div>
-
           <div className="add-row" style={{marginTop:0, marginBottom:16}}>
             <label className="add-btn" style={{cursor:'pointer', display:'inline-block'}}>
               {templateUploading ? '업로드 중...' : '+ 양식 파일 올리기'}

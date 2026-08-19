@@ -1378,7 +1378,6 @@ function DashboardInner() {
       {view === 'templates' && (
         <div className="panel">
           <div className="panel-head">
-            <h2>양식함</h2>
             <div className="cycle-label">위험성평가표, TBM일지 같은 빈 양식 파일을 올려두고 다운로드해서 쓰세요</div>
           </div>
 

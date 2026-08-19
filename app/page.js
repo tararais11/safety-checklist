@@ -1383,9 +1383,10 @@ function DashboardInner() {
         const defaultCategories = ['일반', '현장서류', '중대재해처벌법'];
         const usedCategories = [...new Set(templates.map(t => t.category || '일반'))];
         const allCategories = [...new Set([...defaultCategories, ...usedCategories])];
+        const sortedTemplates = [...templates].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || new Date(b.created_at) - new Date(a.created_at));
         const filteredTemplates = templateCategory === '전체'
-          ? templates
-          : templates.filter(t => (t.category || '일반') === templateCategory);
+          ? sortedTemplates
+          : sortedTemplates.filter(t => (t.category || '일반') === templateCategory);
 
         return (
         <>

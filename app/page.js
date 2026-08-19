@@ -547,6 +547,7 @@ function DashboardInner() {
     const { data: templateRows } = await supabase
       .from('templates')
       .select('*')
+      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false });
     setTemplates(templateRows || []);
 
@@ -676,9 +677,10 @@ function DashboardInner() {
     const { error: upErr } = await supabase.storage.from('templates').upload(path, file);
     if (upErr) { setError('양식 업로드 실패: ' + upErr.message); setTemplateUploading(false); return; }
 
+    const minOrder = templates.length > 0 ? Math.min(...templates.map(t => t.sort_order ?? 0)) - 1 : 0;
     const { data, error: insErr } = await supabase
       .from('templates')
-      .insert({ user_id: user.id, name: file.name, file_url: path, file_name: file.name })
+      .insert({ user_id: user.id, name: file.name, file_url: path, file_name: file.name, sort_order: minOrder })
       .select();
     if (insErr) { setError('양식 정보 저장 실패: ' + insErr.message); setTemplateUploading(false); return; }
 
@@ -691,6 +693,30 @@ function DashboardInner() {
     await supabase.storage.from('templates').remove([tpl.file_url]);
     await supabase.from('templates').delete().eq('id', tpl.id);
     setTemplates(prev => prev.filter(t => t.id !== tpl.id));
+  };
+
+  const moveTemplate = async (tpl, direction) => {
+    const group = [...templates].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || new Date(b.created_at) - new Date(a.created_at));
+    const idx = group.findIndex(t => t.id === tpl.id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= group.length) return;
+
+    const normalized = group.map((t, i) => ({ id: t.id, sort_order: i }));
+    const tmp = normalized[idx].sort_order;
+    normalized[idx].sort_order = normalized[swapIdx].sort_order;
+    normalized[swapIdx].sort_order = tmp;
+
+    setTemplates(prev => {
+      const updated = prev.map(p => {
+        const found = normalized.find(n => n.id === p.id);
+        return found ? { ...p, sort_order: found.sort_order } : p;
+      });
+      return updated.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    });
+
+    await Promise.all(normalized.map(n =>
+      supabase.from('templates').update({ sort_order: n.sort_order }).eq('id', n.id)
+    ));
   };
 
   const getTemplateSignedUrl = async (path) => {
@@ -1366,13 +1392,15 @@ function DashboardInner() {
 
           {templates.length === 0 && <div className="empty">아직 올린 양식이 없어요. 위 버튼으로 추가해보세요.</div>}
 
-          {templates.map(tpl => (
+          {templates.map((tpl, idx) => (
             <div className="item" key={tpl.id}>
               <div className="item-body">
                 <div className="item-name">📄 {tpl.file_name}</div>
                 <div className="item-meta">{new Date(tpl.created_at).toLocaleDateString('ko-KR')} 업로드</div>
               </div>
               <div className="item-actions">
+                <button className="icon-btn" onClick={() => moveTemplate(tpl, 'up')} disabled={idx === 0} title="위로" style={idx === 0 ? {opacity:0.3, cursor:'default'} : {}}>▲</button>
+                <button className="icon-btn" onClick={() => moveTemplate(tpl, 'down')} disabled={idx === templates.length - 1} title="아래로" style={idx === templates.length - 1 ? {opacity:0.3, cursor:'default'} : {}}>▼</button>
                 <button
                   className="icon-btn"
                   onClick={() => downloadTemplate(tpl)}

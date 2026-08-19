@@ -482,6 +482,10 @@ function DashboardInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [templates, setTemplates] = useState([]);
+  const [templateCategory, setTemplateCategory] = useState('전체');
+  const [uploadCategory, setUploadCategory] = useState('일반');
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
   const [templateUploading, setTemplateUploading] = useState(false);
   const [templateSignedUrls, setTemplateSignedUrls] = useState({});
 
@@ -680,7 +684,7 @@ function DashboardInner() {
     const maxOrder = templates.length > 0 ? Math.max(...templates.map(t => t.sort_order ?? 0)) + 1 : 0;
     const { data, error: insErr } = await supabase
       .from('templates')
-      .insert({ user_id: user.id, name: file.name, file_url: path, file_name: file.name, sort_order: maxOrder })
+      .insert({ user_id: user.id, name: file.name, file_url: path, file_name: file.name, sort_order: maxOrder, category: uploadCategory })
       .select();
     if (insErr) { setError('양식 정보 저장 실패: ' + insErr.message); setTemplateUploading(false); return; }
 
@@ -695,28 +699,28 @@ function DashboardInner() {
     setTemplates(prev => prev.filter(t => t.id !== tpl.id));
   };
 
-  const moveTemplate = async (tpl, direction) => {
-    const group = [...templates].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || new Date(b.created_at) - new Date(a.created_at));
+  const moveTemplate = async (tpl, direction, list) => {
+    const group = [...(list || templates)].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || new Date(b.created_at) - new Date(a.created_at));
     const idx = group.findIndex(t => t.id === tpl.id);
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= group.length) return;
 
-    const normalized = group.map((t, i) => ({ id: t.id, sort_order: i }));
-    const tmp = normalized[idx].sort_order;
-    normalized[idx].sort_order = normalized[swapIdx].sort_order;
-    normalized[swapIdx].sort_order = tmp;
+    const a = group[idx];
+    const b = group[swapIdx];
+    const tmpOrder = a.sort_order ?? 0;
+    const newAOrder = b.sort_order ?? 0;
+    const newBOrder = tmpOrder;
 
-    setTemplates(prev => {
-      const updated = prev.map(p => {
-        const found = normalized.find(n => n.id === p.id);
-        return found ? { ...p, sort_order: found.sort_order } : p;
-      });
-      return updated.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-    });
+    setTemplates(prev => prev.map(p => {
+      if (p.id === a.id) return { ...p, sort_order: newAOrder };
+      if (p.id === b.id) return { ...p, sort_order: newBOrder };
+      return p;
+    }));
 
-    await Promise.all(normalized.map(n =>
-      supabase.from('templates').update({ sort_order: n.sort_order }).eq('id', n.id)
-    ));
+    await Promise.all([
+      supabase.from('templates').update({ sort_order: newAOrder }).eq('id', a.id),
+      supabase.from('templates').update({ sort_order: newBOrder }).eq('id', b.id),
+    ]);
   };
 
   const getTemplateSignedUrl = async (path) => {
@@ -1375,28 +1379,75 @@ function DashboardInner() {
         );
       })()}
 
-      {view === 'templates' && (
+      {view === 'templates' && (() => {
+        const defaultCategories = ['일반', '현장서류', '중대재해처벌법'];
+        const usedCategories = [...new Set(templates.map(t => t.category || '일반'))];
+        const allCategories = [...new Set([...defaultCategories, ...usedCategories])];
+        const filteredTemplates = templateCategory === '전체'
+          ? templates
+          : templates.filter(t => (t.category || '일반') === templateCategory);
+
+        return (
         <>
-          <div style={{display:'flex', justifyContent:'flex-end', marginBottom:14}}>
-            <label className="add-btn" style={{cursor:'pointer', display:'inline-block'}}>
-              {templateUploading ? '업로드 중...' : '+ 양식 파일 올리기'}
-              <input type="file" style={{display:'none'}}
-                onChange={e => e.target.files[0] && uploadTemplate(e.target.files[0])} />
-            </label>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14, flexWrap:'wrap', gap:10}}>
+            <div className="tabs" style={{margin:0}}>
+              <div className={"tab" + (templateCategory === '전체' ? " active" : "")} onClick={() => setTemplateCategory('전체')}>
+                전체<span className="count">{templates.length}</span>
+              </div>
+              {allCategories.map(cat => (
+                <div key={cat} className={"tab" + (templateCategory === cat ? " active" : "")} onClick={() => setTemplateCategory(cat)}>
+                  {cat}<span className="count">{templates.filter(t => (t.category || '일반') === cat).length}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{display:'flex', gap:8, alignItems:'center'}}>
+              {showNewCategoryInput ? (
+                <>
+                  <input
+                    placeholder="새 카테고리명"
+                    value={newCategoryInput}
+                    onChange={e => setNewCategoryInput(e.target.value)}
+                    style={{padding:'8px 10px', border:'1px solid var(--line)', borderRadius:4, fontSize:13, width:120}}
+                  />
+                  <button className="icon-btn" onClick={() => {
+                    if (newCategoryInput.trim()) { setUploadCategory(newCategoryInput.trim()); }
+                    setShowNewCategoryInput(false); setNewCategoryInput('');
+                  }}>확인</button>
+                </>
+              ) : (
+                <select
+                  value={uploadCategory}
+                  onChange={e => {
+                    if (e.target.value === '__new__') { setShowNewCategoryInput(true); }
+                    else { setUploadCategory(e.target.value); }
+                  }}
+                  style={{padding:'9px 10px', border:'1px solid var(--line)', borderRadius:4, fontSize:13}}
+                >
+                  {allCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  <option value="__new__">+ 새 카테고리...</option>
+                </select>
+              )}
+              <label className="add-btn" style={{cursor:'pointer', display:'inline-block'}}>
+                {templateUploading ? '업로드 중...' : `+ "${uploadCategory}"에 올리기`}
+                <input type="file" style={{display:'none'}}
+                  onChange={e => e.target.files[0] && uploadTemplate(e.target.files[0])} />
+              </label>
+            </div>
           </div>
 
           <div className="panel">
-          {templates.length === 0 && <div className="empty">아직 올린 양식이 없어요. 위 버튼으로 추가해보세요.</div>}
+          {filteredTemplates.length === 0 && <div className="empty">이 카테고리에는 아직 올린 양식이 없어요.</div>}
 
-          {templates.map((tpl, idx) => (
+          {filteredTemplates.map((tpl, idx) => (
             <div className="item" key={tpl.id}>
               <div className="item-body">
-                <div className="item-name">📄 {tpl.file_name}</div>
+                <div className="item-name">📄 {tpl.file_name} <span className="badge" style={{marginLeft:6, background:'var(--safety-dim)', color:'var(--safety)'}}>{tpl.category || '일반'}</span></div>
                 <div className="item-meta">{new Date(tpl.created_at).toLocaleDateString('ko-KR')} 업로드</div>
               </div>
               <div className="item-actions">
-                <button className="icon-btn" onClick={() => moveTemplate(tpl, 'up')} disabled={idx === 0} title="위로" style={idx === 0 ? {opacity:0.3, cursor:'default'} : {}}>▲</button>
-                <button className="icon-btn" onClick={() => moveTemplate(tpl, 'down')} disabled={idx === templates.length - 1} title="아래로" style={idx === templates.length - 1 ? {opacity:0.3, cursor:'default'} : {}}>▼</button>
+                <button className="icon-btn" onClick={() => moveTemplate(tpl, 'up', filteredTemplates)} disabled={idx === 0} title="위로" style={idx === 0 ? {opacity:0.3, cursor:'default'} : {}}>▲</button>
+                <button className="icon-btn" onClick={() => moveTemplate(tpl, 'down', filteredTemplates)} disabled={idx === filteredTemplates.length - 1} title="아래로" style={idx === filteredTemplates.length - 1 ? {opacity:0.3, cursor:'default'} : {}}>▼</button>
                 <button
                   className="icon-btn"
                   onClick={() => downloadTemplate(tpl)}
@@ -1411,7 +1462,8 @@ function DashboardInner() {
           ))}
           </div>
         </>
-      )}
+        );
+      })()}
 
       {view === 'adminUsers' && isAdmin && <AdminUsersPanel />}
       {view === 'evalCreate' && isAdmin && <AdminEvalCreatePanel />}

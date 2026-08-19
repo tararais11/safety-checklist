@@ -677,14 +677,14 @@ function DashboardInner() {
     const { error: upErr } = await supabase.storage.from('templates').upload(path, file);
     if (upErr) { setError('양식 업로드 실패: ' + upErr.message); setTemplateUploading(false); return; }
 
-    const minOrder = templates.length > 0 ? Math.min(...templates.map(t => t.sort_order ?? 0)) - 1 : 0;
+    const maxOrder = templates.length > 0 ? Math.max(...templates.map(t => t.sort_order ?? 0)) + 1 : 0;
     const { data, error: insErr } = await supabase
       .from('templates')
-      .insert({ user_id: user.id, name: file.name, file_url: path, file_name: file.name, sort_order: minOrder })
+      .insert({ user_id: user.id, name: file.name, file_url: path, file_name: file.name, sort_order: maxOrder })
       .select();
     if (insErr) { setError('양식 정보 저장 실패: ' + insErr.message); setTemplateUploading(false); return; }
 
-    setTemplates(prev => [...(data || []), ...prev]);
+    setTemplates(prev => [...prev, ...(data || [])]);
     setTemplateUploading(false);
   };
 

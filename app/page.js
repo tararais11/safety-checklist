@@ -1376,8 +1376,8 @@ function DashboardInner() {
       })()}
 
       {view === 'templates' && (
-        <div className="panel">
-          <div className="add-row" style={{marginTop:0, marginBottom:16, justifyContent:'flex-end'}}>
+        <>
+          <div style={{display:'flex', justifyContent:'flex-end', marginBottom:14}}>
             <label className="add-btn" style={{cursor:'pointer', display:'inline-block'}}>
               {templateUploading ? '업로드 중...' : '+ 양식 파일 올리기'}
               <input type="file" style={{display:'none'}}
@@ -1385,6 +1385,7 @@ function DashboardInner() {
             </label>
           </div>
 
+          <div className="panel">
           {templates.length === 0 && <div className="empty">아직 올린 양식이 없어요. 위 버튼으로 추가해보세요.</div>}
 
           {templates.map((tpl, idx) => (
@@ -1408,7 +1409,8 @@ function DashboardInner() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {view === 'adminUsers' && isAdmin && <AdminUsersPanel />}

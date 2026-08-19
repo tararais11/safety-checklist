@@ -1377,7 +1377,7 @@ function DashboardInner() {
 
       {view === 'templates' && (
         <div className="panel">
-          <div className="add-row" style={{marginTop:0, marginBottom:16}}>
+          <div className="add-row" style={{marginTop:0, marginBottom:16, justifyContent:'flex-end'}}>
             <label className="add-btn" style={{cursor:'pointer', display:'inline-block'}}>
               {templateUploading ? '업로드 중...' : '+ 양식 파일 올리기'}
               <input type="file" style={{display:'none'}}

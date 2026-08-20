@@ -18,6 +18,10 @@ export default function AdminEvalCreatePanel() {
 
   const [criterionDraft, setCriterionDraft] = useState({});
   const [expandedTemplateId, setExpandedTemplateId] = useState(null);
+  const [editingTemplateId, setEditingTemplateId] = useState(null);
+  const [editTemplateDraft, setEditTemplateDraft] = useState({ title: '', legal_basis: '', notes: '' });
+  const [editingCriterionId, setEditingCriterionId] = useState(null);
+  const [editCriterionDraft, setEditCriterionDraft] = useState({ content: '', criteria_text: '', max_score: 10 });
 
   const [assignTemplateId, setAssignTemplateId] = useState('');
   const [assignVendorId, setAssignVendorId] = useState('');
@@ -70,6 +74,29 @@ export default function AdminEvalCreatePanel() {
     setTemplates(prev => prev.filter(t => t.id !== id));
   };
 
+  const startEditTemplate = (t) => {
+    setEditingTemplateId(t.id);
+    setEditTemplateDraft({ title: t.title, legal_basis: t.legal_basis || '', notes: t.notes || '' });
+  };
+
+  const cancelEditTemplate = () => setEditingTemplateId(null);
+
+  const saveEditTemplate = async (id) => {
+    if (!editTemplateDraft.title.trim()) return;
+    const { data, error: err } = await supabase
+      .from('eval_templates')
+      .update({
+        title: editTemplateDraft.title.trim(),
+        legal_basis: editTemplateDraft.legal_basis,
+        notes: editTemplateDraft.notes,
+      })
+      .eq('id', id)
+      .select();
+    if (err) { setError(err.message); return; }
+    setTemplates(prev => prev.map(t => t.id === id ? { ...t, ...data[0] } : t));
+    setEditingTemplateId(null);
+  };
+
   const addCriterion = async (templateId) => {
     const draft = criterionDraft[templateId];
     if (!draft?.content?.trim()) return;
@@ -94,6 +121,31 @@ export default function AdminEvalCreatePanel() {
     if (!confirm(`"${content}" 항목을 삭제할까요? 되돌릴 수 없어요.`)) return;
     await supabase.from('eval_criteria').delete().eq('id', criterionId);
     setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, eval_criteria: t.eval_criteria.filter(c => c.id !== criterionId) } : t));
+  };
+
+  const startEditCriterion = (c) => {
+    setEditingCriterionId(c.id);
+    setEditCriterionDraft({ content: c.content, criteria_text: c.criteria_text || '', max_score: c.max_score });
+  };
+
+  const cancelEditCriterion = () => setEditingCriterionId(null);
+
+  const saveEditCriterion = async (templateId, criterionId) => {
+    if (!editCriterionDraft.content.trim()) return;
+    const { data, error: err } = await supabase
+      .from('eval_criteria')
+      .update({
+        content: editCriterionDraft.content.trim(),
+        criteria_text: editCriterionDraft.criteria_text,
+        max_score: Number(editCriterionDraft.max_score) || 10,
+      })
+      .eq('id', criterionId)
+      .select();
+    if (err) { setError(err.message); return; }
+    setTemplates(prev => prev.map(t => t.id === templateId
+      ? { ...t, eval_criteria: t.eval_criteria.map(c => c.id === criterionId ? data[0] : c) }
+      : t));
+    setEditingCriterionId(null);
   };
 
   const createEvaluation = async () => {
@@ -122,8 +174,14 @@ export default function AdminEvalCreatePanel() {
         period_end: assignEnd || null,
         criteria_snapshot: snapshot,
       }));
-      const { error: err } = await supabase.from('evaluations').insert(rows);
+      const { data: created, error: err } = await supabase.from('evaluations').insert(rows).select('id');
       if (err) { setError(err.message); return; }
+      (created || []).forEach(row => {
+        fetch('/api/notify/evaluation-assigned', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ evaluationId: row.id }),
+        }).catch(() => {});
+      });
       setAssignTemplateId(''); setAssignVendorId(''); setAssignStart(''); setAssignEnd('');
       setAssignMsg(`협력업체 ${vendors.length}곳 전체에 평가가 배정되었어요. "평가검토" 메뉴에서 확인할 수 있어요.`);
       setTimeout(() => setAssignMsg(null), 5000);
@@ -142,6 +200,10 @@ export default function AdminEvalCreatePanel() {
       })
       .select('*, eval_templates(title), profiles!evaluations_vendor_id_fkey(email, company_name)');
     if (err) { setError(err.message); return; }
+    fetch('/api/notify/evaluation-assigned', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evaluationId: data[0].id }),
+    }).catch(() => {});
     setAssignTemplateId(''); setAssignVendorId(''); setAssignStart(''); setAssignEnd('');
     setAssignMsg(`"${data[0].profiles?.company_name || data[0].profiles?.email}"에 평가가 배정되었어요. "평가검토" 메뉴에서 확인할 수 있어요.`);
     setTimeout(() => setAssignMsg(null), 5000);
@@ -164,6 +226,7 @@ export default function AdminEvalCreatePanel() {
 
         {templates.map(t => {
           const isOpen = expandedTemplateId === t.id;
+          const isEditingTemplate = editingTemplateId === t.id;
           return (
           <div
             key={t.id}
@@ -172,6 +235,32 @@ export default function AdminEvalCreatePanel() {
               overflow:'hidden',
             }}
           >
+            {isEditingTemplate ? (
+              <div style={{padding:'14px 16px', borderLeft:'4px solid var(--safety)'}}>
+                <input
+                  placeholder="평가명"
+                  value={editTemplateDraft.title}
+                  onChange={e => setEditTemplateDraft(prev => ({ ...prev, title: e.target.value }))}
+                  style={{width:'100%', marginBottom:8, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:3, fontSize:14}}
+                />
+                <input
+                  placeholder="평가근거"
+                  value={editTemplateDraft.legal_basis}
+                  onChange={e => setEditTemplateDraft(prev => ({ ...prev, legal_basis: e.target.value }))}
+                  style={{width:'100%', marginBottom:8, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:3, fontSize:13.5}}
+                />
+                <input
+                  placeholder="평가제출 유의사항"
+                  value={editTemplateDraft.notes}
+                  onChange={e => setEditTemplateDraft(prev => ({ ...prev, notes: e.target.value }))}
+                  style={{width:'100%', marginBottom:10, padding:'9px 11px', border:'1px solid var(--line)', borderRadius:3, fontSize:13.5}}
+                />
+                <div style={{display:'flex', gap:8}}>
+                  <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => saveEditTemplate(t.id)}>저장</button>
+                  <button className="icon-btn" onClick={cancelEditTemplate}>취소</button>
+                </div>
+              </div>
+            ) : (
             <div
               style={{
                 display:'flex', justifyContent:'space-between', alignItems:'center',
@@ -187,24 +276,60 @@ export default function AdminEvalCreatePanel() {
                 {t.legal_basis && <div style={{fontSize:12, color:'var(--muted)', marginTop:3}}>근거: {t.legal_basis}</div>}
               </div>
               <div style={{display:'flex', alignItems:'center', gap:12}}>
+                <button className="icon-btn" onClick={e => { e.stopPropagation(); startEditTemplate(t); }}>수정</button>
                 <button className="icon-btn" onClick={e => { e.stopPropagation(); deleteTemplate(t.id); }}>템플릿 삭제</button>
                 <span style={{fontSize:16, color:'var(--muted)'}}>{isOpen ? '▲' : '▼'}</span>
               </div>
             </div>
+            )}
 
             {isOpen && (
               <div style={{padding:'0 16px 16px', borderTop:'1px solid #eee6d3'}}>
-                {t.eval_criteria.map(c => (
-                  <div className="item" key={c.id}>
-                    <div className="item-body">
-                      <div className="item-name">{c.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>(배점 {c.max_score})</span></div>
-                      <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{c.criteria_text}</div>
-                    </div>
-                    <div className="item-actions">
-                      <button className="icon-btn" onClick={() => removeCriterion(t.id, c.id, c.content)}>✕</button>
-                    </div>
+                {t.eval_criteria.map(c => {
+                  const isEditingCriterion = editingCriterionId === c.id;
+                  return (
+                  <div className="item" key={c.id} style={isEditingCriterion ? {flexDirection:'column', alignItems:'stretch'} : {}}>
+                    {isEditingCriterion ? (
+                      <div style={{width:'100%'}}>
+                        <input
+                          placeholder="평가내용"
+                          value={editCriterionDraft.content}
+                          onChange={e => setEditCriterionDraft(prev => ({ ...prev, content: e.target.value }))}
+                          style={{width:'100%', marginBottom:8, padding:'8px 10px', border:'1px solid var(--line)', borderRadius:3, fontSize:13.5}}
+                        />
+                        <textarea
+                          placeholder="평가기준 설명"
+                          value={editCriterionDraft.criteria_text}
+                          onChange={e => setEditCriterionDraft(prev => ({ ...prev, criteria_text: e.target.value }))}
+                          rows={3}
+                          style={{width:'100%', marginBottom:8, padding:'8px 10px', border:'1px solid var(--line)', borderRadius:3, fontSize:13, fontFamily:'inherit', resize:'vertical'}}
+                        />
+                        <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                          <input
+                            type="number" placeholder="배점"
+                            value={editCriterionDraft.max_score}
+                            onChange={e => setEditCriterionDraft(prev => ({ ...prev, max_score: e.target.value }))}
+                            style={{width:80, padding:'8px 10px', border:'1px solid var(--line)', borderRadius:3, fontSize:13.5}}
+                          />
+                          <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => saveEditCriterion(t.id, c.id)}>저장</button>
+                          <button className="icon-btn" onClick={cancelEditCriterion}>취소</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="item-body">
+                          <div className="item-name">{c.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>(배점 {c.max_score})</span></div>
+                          <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{c.criteria_text}</div>
+                        </div>
+                        <div className="item-actions">
+                          <button className="icon-btn" onClick={() => startEditCriterion(c)}>수정</button>
+                          <button className="icon-btn" onClick={() => removeCriterion(t.id, c.id, c.content)}>✕</button>
+                        </div>
+                      </>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
 
                 <div className="add-row" style={{marginTop:10, alignItems:'flex-start'}}>
                   <input

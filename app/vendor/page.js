@@ -320,19 +320,33 @@ export default function VendorPage() {
                       getSignedUrl={getSignedUrl}
                     />
                   ))}
-                  {openEval.status === 'reviewed' && (
-                    <div style={{
-                      display:'flex', justifyContent:'space-between', alignItems:'center',
-                      borderTop:'2px solid var(--ink)', marginTop:8, padding:'10px 4px', fontWeight:800, fontSize:14,
-                    }}>
-                      <span>합계</span>
-                      <span>
-                        {rows.reduce((sum, r) => sum + (r.response?.review_score == null ? 0 : Number(r.response.review_score)), 0)}
-                        {' '}/{' '}
-                        {rows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0)}
-                      </span>
-                    </div>
-                  )}
+                  {openEval.status === 'reviewed' && (() => {
+                    const scoreOf = r => (r.response?.review_score == null ? 0 : Number(r.response.review_score));
+                    const baseRows = rows.filter(r => !r.criterion.is_bonus);
+                    const bonusRows = rows.filter(r => r.criterion.is_bonus);
+                    const baseTotal = baseRows.reduce((sum, r) => sum + scoreOf(r), 0);
+                    const baseMaxTotal = baseRows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0);
+                    const bonusTotal = bonusRows.reduce((sum, r) => sum + scoreOf(r), 0);
+                    const finalTotal = baseTotal + bonusTotal;
+                    return (
+                      <div style={{marginTop:8, borderTop:'2px solid var(--ink)', padding:'10px 4px'}}>
+                        <div style={{display:'flex', justifyContent:'space-between', fontSize:13, color:'var(--muted)', marginBottom:4}}>
+                          <span>기본점수</span>
+                          <span>{baseTotal} / {baseMaxTotal}</span>
+                        </div>
+                        {bonusRows.length > 0 && (
+                          <div style={{display:'flex', justifyContent:'space-between', fontSize:13, color:'var(--ok)', marginBottom:4}}>
+                            <span>가점</span>
+                            <span>+{bonusTotal}</span>
+                          </div>
+                        )}
+                        <div style={{display:'flex', justifyContent:'space-between', fontWeight:800, fontSize:15, marginTop:4}}>
+                          <span>최종점수</span>
+                          <span>{finalTotal}점</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {openEval.status === 'pending' && (
                     <div style={{marginTop:20, display:'flex', justifyContent:'flex-end', gap:12}}>
                       <button
@@ -386,19 +400,44 @@ export default function VendorPage() {
                         {rows.map((row, idx) => (
                           <tr key={row.criterion.id}>
                             <td style={printTdCenter}>{idx + 1}</td>
-                            <td style={printTd}>{row.criterion.content}</td>
+                            <td style={printTd}>{row.criterion.content}{row.criterion.is_bonus ? ' (가점)' : ''}</td>
                             <td style={{...printTd, whiteSpace:'pre-wrap'}}>{row.criterion.criteria_text}</td>
                             <td style={{...printTd, textAlign:'center'}}>{row.criterion.max_score}</td>
                             <td style={{...printTd, textAlign:'center'}}>{row.response?.review_score ?? '-'}</td>
                             <td style={printTd}>{row.response?.review_comment}</td>
                           </tr>
                         ))}
-                        <tr>
-                          <td style={{...printTd, fontWeight:800, background:'#fdecc8', color:'#92400e'}} colSpan={3}>합계</td>
-                          <td style={{...printTd, fontWeight:800, textAlign:'center', background:'#fdecc8', color:'#92400e'}}>{rows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0)}</td>
-                          <td style={{...printTd, fontWeight:800, textAlign:'center', background:'#fdecc8', color:'#92400e'}}>{rows.reduce((sum, r) => sum + (r.response?.review_score == null ? 0 : Number(r.response.review_score)), 0)}</td>
-                          <td style={{...printTd, background:'#fdecc8'}}></td>
-                        </tr>
+                        {(() => {
+                          const scoreOf = r => (r.response?.review_score == null ? 0 : Number(r.response.review_score));
+                          const baseRows = rows.filter(r => !r.criterion.is_bonus);
+                          const bonusRows = rows.filter(r => r.criterion.is_bonus);
+                          const baseTotal = baseRows.reduce((sum, r) => sum + scoreOf(r), 0);
+                          const baseMaxTotal = baseRows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0);
+                          const bonusTotal = bonusRows.reduce((sum, r) => sum + scoreOf(r), 0);
+                          const finalTotal = baseTotal + bonusTotal;
+                          return (
+                            <>
+                              <tr>
+                                <td style={{...printTd, fontWeight:700}} colSpan={3}>기본점수 소계</td>
+                                <td style={{...printTd, fontWeight:700, textAlign:'center'}}>{baseMaxTotal}</td>
+                                <td style={{...printTd, fontWeight:700, textAlign:'center'}}>{baseTotal}</td>
+                                <td style={printTd}></td>
+                              </tr>
+                              {bonusRows.length > 0 && (
+                                <tr>
+                                  <td style={{...printTd, fontWeight:700}} colSpan={3}>가점 소계</td>
+                                  <td style={printTd}></td>
+                                  <td style={{...printTd, fontWeight:700, textAlign:'center', color:'#166534'}}>+{bonusTotal}</td>
+                                  <td style={printTd}></td>
+                                </tr>
+                              )}
+                              <tr>
+                                <td style={{...printTd, fontWeight:800, background:'#fdecc8', color:'#92400e'}} colSpan={4}>최종점수</td>
+                                <td style={{...printTd, fontWeight:800, textAlign:'center', background:'#fdecc8', color:'#92400e'}} colSpan={2}>{finalTotal}점</td>
+                              </tr>
+                            </>
+                          );
+                        })()}
                       </tbody>
                     </table>
                     <div style={{fontSize:10.5, color:'#777', marginTop:20}}>출력일: {new Date().toLocaleDateString('ko-KR')}</div>

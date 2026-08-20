@@ -21,7 +21,7 @@ export default function AdminEvalCreatePanel() {
   const [editingTemplateId, setEditingTemplateId] = useState(null);
   const [editTemplateDraft, setEditTemplateDraft] = useState({ title: '', legal_basis: '', notes: '' });
   const [editingCriterionId, setEditingCriterionId] = useState(null);
-  const [editCriterionDraft, setEditCriterionDraft] = useState({ content: '', criteria_text: '', max_score: 10 });
+  const [editCriterionDraft, setEditCriterionDraft] = useState({ content: '', criteria_text: '', max_score: 10, is_bonus: false });
 
   const [assignTemplateId, setAssignTemplateId] = useState('');
   const [assignVendorId, setAssignVendorId] = useState('');
@@ -110,11 +110,12 @@ export default function AdminEvalCreatePanel() {
         content: draft.content.trim(),
         criteria_text: draft.criteria_text || '',
         max_score: Number(draft.max_score) || 10,
+        is_bonus: !!draft.is_bonus,
       })
       .select();
     if (err) { setError(err.message); return; }
     setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, eval_criteria: [...t.eval_criteria, data[0]] } : t));
-    setCriterionDraft(prev => ({ ...prev, [templateId]: { content: '', criteria_text: '', max_score: 10 } }));
+    setCriterionDraft(prev => ({ ...prev, [templateId]: { content: '', criteria_text: '', max_score: 10, is_bonus: false } }));
   };
 
   const removeCriterion = async (templateId, criterionId, content) => {
@@ -125,7 +126,7 @@ export default function AdminEvalCreatePanel() {
 
   const startEditCriterion = (c) => {
     setEditingCriterionId(c.id);
-    setEditCriterionDraft({ content: c.content, criteria_text: c.criteria_text || '', max_score: c.max_score });
+    setEditCriterionDraft({ content: c.content, criteria_text: c.criteria_text || '', max_score: c.max_score, is_bonus: !!c.is_bonus });
   };
 
   const cancelEditCriterion = () => setEditingCriterionId(null);
@@ -138,6 +139,7 @@ export default function AdminEvalCreatePanel() {
         content: editCriterionDraft.content.trim(),
         criteria_text: editCriterionDraft.criteria_text,
         max_score: Number(editCriterionDraft.max_score) || 10,
+        is_bonus: !!editCriterionDraft.is_bonus,
       })
       .eq('id', criterionId)
       .select();
@@ -155,7 +157,7 @@ export default function AdminEvalCreatePanel() {
     // 배정 시점의 항목들을 그대로 고정(스냅샷)해서 저장 — 나중에 템플릿을 수정해도 이 평가는 안 바뀌어요
     const template = templates.find(t => t.id === assignTemplateId);
     const snapshot = (template?.eval_criteria || []).map(c => ({
-      id: c.id, content: c.content, criteria_text: c.criteria_text, max_score: c.max_score, sort_order: c.sort_order,
+      id: c.id, content: c.content, criteria_text: c.criteria_text, max_score: c.max_score, sort_order: c.sort_order, is_bonus: !!c.is_bonus,
     }));
 
     if (assignVendorId !== '__all__') {
@@ -311,6 +313,14 @@ export default function AdminEvalCreatePanel() {
                             onChange={e => setEditCriterionDraft(prev => ({ ...prev, max_score: e.target.value }))}
                             style={{width:80, padding:'8px 10px', border:'1px solid var(--line)', borderRadius:3, fontSize:13.5}}
                           />
+                          <label style={{display:'flex', alignItems:'center', gap:5, fontSize:12.5, color:'var(--muted)', whiteSpace:'nowrap'}}>
+                            <input
+                              type="checkbox"
+                              checked={!!editCriterionDraft.is_bonus}
+                              onChange={e => setEditCriterionDraft(prev => ({ ...prev, is_bonus: e.target.checked }))}
+                            />
+                            가점 항목
+                          </label>
                           <button className="add-btn" style={{fontSize:12, padding:'6px 12px'}} onClick={() => saveEditCriterion(t.id, c.id)}>저장</button>
                           <button className="icon-btn" onClick={cancelEditCriterion}>취소</button>
                         </div>
@@ -318,7 +328,10 @@ export default function AdminEvalCreatePanel() {
                     ) : (
                       <>
                         <div className="item-body">
-                          <div className="item-name">{c.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>(배점 {c.max_score})</span></div>
+                          <div className="item-name">
+                            {c.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>({c.is_bonus ? '가점' : '배점'} {c.max_score})</span>
+                            {c.is_bonus && <span className="badge" style={{marginLeft:6, background:'var(--ok-bg)', color:'var(--ok)'}}>가점 항목</span>}
+                          </div>
                           <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{c.criteria_text}</div>
                         </div>
                         <div className="item-actions">
@@ -351,6 +364,14 @@ export default function AdminEvalCreatePanel() {
                     onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], max_score: e.target.value } }))}
                     style={{width:80}}
                   />
+                  <label style={{display:'flex', alignItems:'center', gap:5, fontSize:12.5, color:'var(--muted)', whiteSpace:'nowrap'}}>
+                    <input
+                      type="checkbox"
+                      checked={!!criterionDraft[t.id]?.is_bonus}
+                      onChange={e => setCriterionDraft(prev => ({ ...prev, [t.id]: { ...prev[t.id], is_bonus: e.target.checked } }))}
+                    />
+                    가점 항목
+                  </label>
                   <button className="add-btn" onClick={() => addCriterion(t.id)}>추가</button>
                 </div>
               </div>

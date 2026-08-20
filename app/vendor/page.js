@@ -10,10 +10,11 @@ import AnnouncementsPanel from '../components/AnnouncementsPanel';
 const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
 
 const printTh = {
-  border:'1px solid #231f20', padding:'7px 9px', background:'#231f20', color:'#ffffff',
-  textAlign:'left', fontSize:11.5, WebkitPrintColorAdjust:'exact', printColorAdjust:'exact',
+  border:'1px solid #4a4a4a', padding:'8px 9px', background:'#231f20', color:'#ffffff',
+  textAlign:'center', fontSize:11.5, fontWeight:700, WebkitPrintColorAdjust:'exact', printColorAdjust:'exact',
 };
-const printTd = { border:'1px solid #c9c2ad', padding:'6px 9px', verticalAlign:'top', fontSize:11.5 };
+const printTd = { border:'1px solid #c9c2ad', padding:'7px 9px', verticalAlign:'top', fontSize:11.5, textAlign:'left' };
+const printTdCenter = { ...printTd, textAlign:'center' };
 
 export default function VendorPage() {
   const supabase = createClient();
@@ -384,7 +385,7 @@ export default function VendorPage() {
                       <tbody>
                         {rows.map((row, idx) => (
                           <tr key={row.criterion.id}>
-                            <td style={printTd}>{idx + 1}</td>
+                            <td style={printTdCenter}>{idx + 1}</td>
                             <td style={printTd}>{row.criterion.content}</td>
                             <td style={{...printTd, whiteSpace:'pre-wrap'}}>{row.criterion.criteria_text}</td>
                             <td style={{...printTd, textAlign:'center'}}>{row.criterion.max_score}</td>

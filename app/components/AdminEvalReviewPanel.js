@@ -122,6 +122,25 @@ export default function AdminEvalReviewPanel() {
     alert('제출이 취소되어 협력업체가 다시 작성할 수 있어요.');
   };
 
+  const deleteEvaluation = async (evaluation) => {
+    const vendorLabel = evaluation.profiles?.company_name || evaluation.profiles?.email;
+    if (!confirm(`"${vendorLabel}"의 "${evaluation.eval_templates?.title}" 평가를 완전히 삭제할까요?\n제출한 증빙자료, 검토점수, 의견이 모두 함께 삭제되며 되돌릴 수 없어요.`)) return;
+
+    const { data: files } = await supabase
+      .from('eval_evidence_files')
+      .select('file_url')
+      .eq('evaluation_id', evaluation.id);
+    if (files && files.length > 0) {
+      await supabase.storage.from('vendor-evidence').remove(files.map(f => f.file_url));
+    }
+
+    const { error: err } = await supabase.from('evaluations').delete().eq('id', evaluation.id);
+    if (err) { setError('삭제 실패: ' + err.message); return; }
+
+    setEvaluations(prev => prev.filter(e => e.id !== evaluation.id));
+    if (openEval?.id === evaluation.id) setOpenEval(null);
+  };
+
   if (loading) return <div className="empty">불러오는 중...</div>;
 
   if (openEval) {
@@ -152,6 +171,7 @@ export default function AdminEvalReviewPanel() {
             {openEval.status !== 'pending' && (
               <button className="icon-btn" style={{color:'var(--warn)'}} onClick={cancelSubmission}>제출취소 (다시 작성하게 하기)</button>
             )}
+            <button className="icon-btn" style={{color:'var(--warn)'}} onClick={() => deleteEvaluation(openEval)}>평가 삭제</button>
           </div>
         </div>
 
@@ -319,6 +339,7 @@ export default function AdminEvalReviewPanel() {
             </div>
             <div className="item-actions">
               <span className="icon-btn">보기 / 검토 →</span>
+              <button className="icon-btn" style={{color:'var(--warn)'}} onClick={e => { e.stopPropagation(); deleteEvaluation(ev); }}>삭제</button>
             </div>
           </div>
         ))}

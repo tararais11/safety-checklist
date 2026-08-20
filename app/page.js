@@ -1213,11 +1213,6 @@ function DashboardInner() {
           </div>
 
           <div className="panel">
-          <div className="panel-head">
-            <h2>연도별 완료 기록</h2>
-            <div className="cycle-label">체크한 항목은 그 해가 끝날 때까지 완료 상태로 유지되고, 새해가 되면 다시 미완료로 시작해요 — 연도를 선택해서 지난 기록을 볼 수 있어요</div>
-          </div>
-
           {PERIODS.filter(p => p.key === yearlyPeriod).map((p, pIdx) => {
             const pItems = items.filter(i => i.period === p.key);
             if (pItems.length === 0) return (

@@ -61,9 +61,16 @@ export default function AdminEvalReviewPanel() {
       .select('*')
       .eq('evaluation_id', evaluation.id);
 
+    const { data: evidenceFiles } = await supabase
+      .from('eval_evidence_files')
+      .select('*')
+      .eq('evaluation_id', evaluation.id)
+      .order('uploaded_at', { ascending: true });
+
     const rows = (criteria || []).map(c => {
       const resp = (responses || []).find(r => r.criterion_id === c.id);
-      return { criterion: c, response: resp || { criterion_id: c.id, evaluation_id: evaluation.id, review_score: '', review_comment: '' } };
+      const files = (evidenceFiles || []).filter(f => f.criterion_id === c.id);
+      return { criterion: c, response: resp || { criterion_id: c.id, evaluation_id: evaluation.id, review_score: '', review_comment: '' }, files };
     });
     setReviewRows(rows);
   };
@@ -97,6 +104,10 @@ export default function AdminEvalReviewPanel() {
       await supabase.from('eval_responses').upsert(payload, { onConflict: 'evaluation_id,criterion_id' });
     }
     await supabase.from('evaluations').update({ status: 'reviewed' }).eq('id', openEval.id);
+    fetch('/api/notify/evaluation-reviewed', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evaluationId: openEval.id }),
+    }).catch(() => {});
     setEvaluations(prev => prev.map(e => e.id === openEval.id ? { ...e, status: 'reviewed' } : e));
     alert('검토 결과가 저장되었어요.');
     setOpenEval(null);
@@ -151,8 +162,12 @@ export default function AdminEvalReviewPanel() {
             <div key={row.criterion.id} style={{borderTop:'1px solid #eee6d3', padding:'16px 4px'}}>
               <div style={{fontWeight:700, fontSize:14.5, marginBottom:4}}>{row.criterion.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>(배점 {row.criterion.max_score})</span></div>
               <div style={{fontSize:13, color:'var(--muted)', whiteSpace:'pre-wrap', marginBottom:10}}>{row.criterion.criteria_text}</div>
-              {row.response.file_url ? (
-                <ResponseFileLink path={row.response.file_url} name={row.response.file_name} getSignedUrl={getSignedUrl} />
+              {(row.files && row.files.length > 0) ? (
+                <div style={{display:'flex', flexDirection:'column', gap:6, marginBottom:8}}>
+                  {row.files.map(f => (
+                    <ResponseFileLink key={f.id} path={f.file_url} name={f.file_name} getSignedUrl={getSignedUrl} />
+                  ))}
+                </div>
               ) : (
                 <div style={{fontSize:12.5, color:'var(--warn)', fontWeight:700, marginBottom:8}}>⚠ 협력업체가 아직 증빙자료를 첨부하지 않았어요.</div>
               )}

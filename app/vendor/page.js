@@ -377,14 +377,11 @@ export default function VendorPage() {
                   <div className="print-report">
                     <div style={{borderBottom:'4px solid #b10208', paddingBottom:10, marginBottom:14}}>
                       <div style={{fontSize:10, letterSpacing:'0.12em', color:'#b10208', fontWeight:700, marginBottom:4}}>SAFETY &amp; HEALTH EVALUATION REPORT</div>
-                      <h1 style={{fontSize:21, marginBottom:2, color:'#231f20'}}>{openEval.eval_templates?.title}</h1>
+                      <h1 style={{fontSize:21, marginBottom:2, color:'#231f20'}}>{openEval.eval_templates?.title} 결과 안내</h1>
                     </div>
                     <div style={{fontSize:12, color:'#555', marginBottom:16}}>
                       평가업체: <b style={{color:'#231f20'}}>{companyName || userEmail}</b> &nbsp;|&nbsp; 평가기간: {openEval.period_start} ~ {openEval.period_end} &nbsp;|&nbsp; 상태: <b style={{color:'#b10208'}}>{statusLabel[openEval.status]}</b>
                     </div>
-                    {openEval.eval_templates?.legal_basis && (
-                      <div style={{fontSize:12, marginBottom:12}}><b>평가근거:</b> {openEval.eval_templates.legal_basis}</div>
-                    )}
                     <table style={{width:'100%', borderCollapse:'collapse', fontSize:11.5}}>
                       <thead>
                         <tr>

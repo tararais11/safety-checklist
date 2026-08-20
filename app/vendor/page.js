@@ -93,19 +93,22 @@ export default function VendorPage() {
       .select('*')
       .eq('evaluation_id', ev.id);
 
+    const { data: evidenceFiles } = await supabase
+      .from('eval_evidence_files')
+      .select('*')
+      .eq('evaluation_id', ev.id)
+      .order('uploaded_at', { ascending: true });
+
     const merged = (criteria || []).map(c => {
       const resp = (responses || []).find(r => r.criterion_id === c.id);
-      return { criterion: c, response: resp || null };
+      const files = (evidenceFiles || []).filter(f => f.criterion_id === c.id);
+      return { criterion: c, response: resp || null, files };
     });
     setRows(merged);
   };
 
-  const uploadEvidence = async (criterion, file) => {
+  const addEvidenceFile = async (criterion, file) => {
     if (!file) return;
-    const existing = rows.find(r => r.criterion.id === criterion.id);
-    if (existing?.response?.file_url) {
-      if (!confirm('이미 첨부된 증빙자료가 있어요. 새 파일로 교체할까요? (기존 파일은 사라져요)')) return;
-    }
     setUploadingId(criterion.id);
     const { data: { user } } = await supabase.auth.getUser();
     const extMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);
@@ -116,19 +119,26 @@ export default function VendorPage() {
     if (upErr) { setError('업로드 실패: ' + upErr.message); setUploadingId(null); return; }
 
     const { data, error: dbErr } = await supabase
-      .from('eval_responses')
-      .upsert({
+      .from('eval_evidence_files')
+      .insert({
         evaluation_id: openEval.id,
         criterion_id: criterion.id,
         file_url: path,
         file_name: file.name,
-      }, { onConflict: 'evaluation_id,criterion_id' })
+      })
       .select();
 
     if (dbErr) { setError('저장 실패: ' + dbErr.message); setUploadingId(null); return; }
 
-    setRows(prev => prev.map(r => r.criterion.id === criterion.id ? { ...r, response: data[0] } : r));
+    setRows(prev => prev.map(r => r.criterion.id === criterion.id ? { ...r, files: [...(r.files || []), data[0]] } : r));
     setUploadingId(null);
+  };
+
+  const removeEvidenceFile = async (criterion, file) => {
+    if (!confirm(`"${file.file_name}" 파일을 삭제할까요?`)) return;
+    await supabase.storage.from('vendor-evidence').remove([file.file_url]);
+    await supabase.from('eval_evidence_files').delete().eq('id', file.id);
+    setRows(prev => prev.map(r => r.criterion.id === criterion.id ? { ...r, files: (r.files || []).filter(f => f.id !== file.id) } : r));
   };
 
   const saveVendorComment = async (criterion, comment) => {
@@ -161,13 +171,17 @@ export default function VendorPage() {
   };
 
   const submitEvaluation = async () => {
-    const missing = rows.filter(r => !r.response?.file_url);
+    const missing = rows.filter(r => !(r.files && r.files.length > 0));
     if (missing.length > 0) {
       if (!confirm(`아직 ${missing.length}개 항목에 증빙자료가 없어요. 그래도 제출할까요?`)) return;
     } else {
       if (!confirm('평가를 제출할까요? 제출 후에는 내용을 수정할 수 없어요.')) return;
     }
     await supabase.from('evaluations').update({ status: 'submitted' }).eq('id', openEval.id);
+    fetch('/api/notify/evaluation-submitted', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evaluationId: openEval.id }),
+    }).catch(() => {});
     setEvaluations(prev => prev.map(e => e.id === openEval.id ? { ...e, status: 'submitted' } : e));
     setOpenEval(prev => ({ ...prev, status: 'submitted' }));
     alert('제출이 완료되었어요.');
@@ -279,6 +293,7 @@ export default function VendorPage() {
                             readOnly={true}
                             uploading={false}
                             onUpload={() => {}}
+                            onRemove={() => {}}
                             onSaveComment={() => {}}
                             getSignedUrl={getSignedUrl}
                           />
@@ -298,7 +313,8 @@ export default function VendorPage() {
                       row={row}
                       readOnly={openEval.status === 'reviewed'}
                       uploading={uploadingId === row.criterion.id}
-                      onUpload={file => uploadEvidence(row.criterion, file)}
+                      onUpload={file => addEvidenceFile(row.criterion, file)}
+                      onRemove={file => removeEvidenceFile(row.criterion, file)}
                       onSaveComment={comment => saveVendorComment(row.criterion, comment)}
                       getSignedUrl={getSignedUrl}
                     />
@@ -496,15 +512,19 @@ export default function VendorPage() {
   );
 }
 
-function EvalRow({ row, readOnly, uploading, onUpload, onSaveComment, getSignedUrl }) {
-  const [url, setUrl] = useState(null);
+function EvalRow({ row, readOnly, uploading, onUpload, onRemove, onSaveComment, getSignedUrl }) {
+  const [urls, setUrls] = useState({});
   const [comment, setComment] = useState(row.response?.vendor_comment || '');
   const [savedComment, setSavedComment] = useState(row.response?.vendor_comment || '');
-  const path = row.response?.file_url;
+  const files = row.files || [];
 
   useEffect(() => {
-    if (path) getSignedUrl(path).then(setUrl);
-  }, [path]);
+    files.forEach(f => {
+      if (!urls[f.file_url]) {
+        getSignedUrl(f.file_url).then(u => setUrls(prev => ({ ...prev, [f.file_url]: u })));
+      }
+    });
+  }, [files.map(f => f.id).join(',')]);
 
   const reviewed = row.response?.review_score !== undefined && row.response?.review_score !== null;
   const commentChanged = comment !== savedComment;
@@ -516,19 +536,26 @@ function EvalRow({ row, readOnly, uploading, onUpload, onSaveComment, getSignedU
         <div className="item-meta" style={{whiteSpace:'pre-wrap'}}>{row.criterion.criteria_text}</div>
       </div>
       <div style={{marginTop:8}}>
-        {path ? (
-          <div style={{fontSize:13}}>
-            📎 {row.response.file_name}{' '}
-            {url && <a href={url} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>보기 ↗</a>}
+        {files.length > 0 ? (
+          <div style={{display:'flex', flexDirection:'column', gap:6}}>
+            {files.map(f => (
+              <div key={f.id} style={{fontSize:13, display:'flex', alignItems:'center', gap:8}}>
+                📎 {f.file_name}{' '}
+                {urls[f.file_url] && <a href={urls[f.file_url]} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>보기 ↗</a>}
+                {!readOnly && (
+                  <button className="icon-btn" style={{fontSize:11, padding:'2px 8px'}} onClick={() => onRemove(f)}>삭제</button>
+                )}
+              </div>
+            ))}
           </div>
         ) : (
           <div style={{fontSize:12.5, color:'var(--muted)'}}>증빙자료 없음</div>
         )}
         {!readOnly && (
           <label className="add-btn" style={{cursor:'pointer', display:'inline-block', fontSize:12, marginTop:8}}>
-            {uploading ? '업로드 중...' : (path ? '파일 교체' : '증빙자료 첨부')}
+            {uploading ? '업로드 중...' : '+ 증빙자료 첨부'}
             <input type="file" accept="application/pdf,image/*" style={{display:'none'}}
-              onChange={e => e.target.files[0] && onUpload(e.target.files[0])} />
+              onChange={e => { if (e.target.files[0]) { onUpload(e.target.files[0]); e.target.value = ''; } }} />
           </label>
         )}
       </div>

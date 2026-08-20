@@ -370,33 +370,23 @@ function lawSearchUrl(lawName, articleNo) {
 function pad(n) { return String(n).padStart(2, '0'); }
 
 function getCycleKey(period, d = new Date()) {
-  const y = d.getFullYear();
-  if (period === 'daily') return `${y}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  if (period === 'weekly') {
-    const onejan = new Date(y, 0, 1);
-    const dayOfYear = Math.floor((d - onejan) / 86400000) + 1;
-    const week = Math.ceil((dayOfYear + onejan.getDay()) / 7);
-    return `${y}-W${pad(week)}`;
-  }
-  if (period === 'monthly') return `${y}-${pad(d.getMonth() + 1)}`;
-  if (period === 'quarterly') return `${y}-Q${Math.floor(d.getMonth() / 3) + 1}`;
-  if (period === 'semiannual') return `${y}-${d.getMonth() < 6 ? '상반기' : '하반기'}`;
-  if (period === 'annual') return `${y}`;
-  return `${y}`;
+  // 주기(일일/주간/월간 등)와 상관없이, 연도 단위로만 초기화돼요.
+  // 즉 한 번 완료 체크하면 그 해가 끝날 때까지 계속 완료 상태로 유지되고,
+  // 새해가 되면 다시 미완료로 시작해요.
+  return `${d.getFullYear()}`;
 }
 
 function cycleLabel(period) {
-  const now = new Date();
-  const key = getCycleKey(period, now);
+  const y = new Date().getFullYear();
   const map = {
-    daily: `오늘 (${key})`,
-    weekly: `이번 주 (${key})`,
-    monthly: `이번 달 (${key})`,
-    quarterly: `이번 분기 (${key})`,
-    semiannual: `이번 ${now.getMonth() < 6 ? '상반기' : '하반기'} (${now.getFullYear()})`,
-    annual: `올해 (${key})`,
+    daily: `${y}년 일일 점검`,
+    weekly: `${y}년 주간 점검`,
+    monthly: `${y}년 월간 점검`,
+    quarterly: `${y}년 분기 점검`,
+    semiannual: `${y}년 반기 점검`,
+    annual: `${y}년 연간 점검`,
   };
-  return map[period] || key;
+  return map[period] || `${y}년 점검`;
 }
 
 function isLeapYear(y) {
@@ -1225,7 +1215,7 @@ function DashboardInner() {
           <div className="panel">
           <div className="panel-head">
             <h2>연도별 완료 기록</h2>
-            <div className="cycle-label">체크 기록은 연도가 지나도 사라지지 않아요 — 연도와 주기를 선택해서 지난 기록을 볼 수 있어요</div>
+            <div className="cycle-label">체크한 항목은 그 해가 끝날 때까지 완료 상태로 유지되고, 새해가 되면 다시 미완료로 시작해요 — 연도를 선택해서 지난 기록을 볼 수 있어요</div>
           </div>
 
           {PERIODS.filter(p => p.key === yearlyPeriod).map((p, pIdx) => {
@@ -1247,9 +1237,9 @@ function DashboardInner() {
                   {p.label} 항목
                 </div>
                 {pItems.map(item => {
-                  const done = completedCyclesInYear(doneMap[item.id], selectedYear) > 0;
+                  const done = !!doneMap[item.id]?.has(String(selectedYear));
                   const yearFiles = Object.entries(fileMap[item.id] || {})
-                    .filter(([ck]) => ck.startsWith(String(selectedYear)))
+                    .filter(([ck]) => ck === String(selectedYear))
                     .sort((a, b) => a[0].localeCompare(b[0]));
                   const isOpen = expandedYearlyItem === item.id;
                   return (
@@ -1265,7 +1255,7 @@ function DashboardInner() {
                           <div className="item-name">{item.name}</div>
                           <div className="item-meta">
                             {done ? <span className="badge ok">완료</span> : <span className="badge warn">미완료</span>}
-                            {selectedYear}년
+                            {' '}{selectedYear}년
                             {yearFiles.length > 0 && <span style={{marginLeft:6}}>📎 첨부 {yearFiles.length}건 {isOpen ? '▲' : '▼'}</span>}
                           </div>
                         </div>
@@ -1295,10 +1285,6 @@ function DashboardInner() {
               </div>
             );
           })}
-
-          <div className="footer-note" style={{marginTop:6}}>
-            주간·일일 항목은 실제 근무일수·공휴일 등에 따라 목표 횟수가 실제와 다를 수 있어요. 참고용 비율로 봐주세요.
-          </div>
           </div>
         </>
       )}

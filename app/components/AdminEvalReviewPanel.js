@@ -125,8 +125,13 @@ export default function AdminEvalReviewPanel() {
   if (loading) return <div className="empty">불러오는 중...</div>;
 
   if (openEval) {
-    const total = reviewRows.reduce((sum, r) => sum + (r.response.review_score === '' || r.response.review_score == null ? 0 : Number(r.response.review_score)), 0);
-    const maxTotal = reviewRows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0);
+    const scoreOf = r => (r.response.review_score === '' || r.response.review_score == null ? 0 : Number(r.response.review_score));
+    const baseRows = reviewRows.filter(r => !r.criterion.is_bonus);
+    const bonusRows = reviewRows.filter(r => r.criterion.is_bonus);
+    const baseTotal = baseRows.reduce((sum, r) => sum + scoreOf(r), 0);
+    const baseMaxTotal = baseRows.reduce((sum, r) => sum + (r.criterion.max_score || 0), 0);
+    const bonusTotal = bonusRows.reduce((sum, r) => sum + scoreOf(r), 0);
+    const finalTotal = baseTotal + bonusTotal;
     const vendorLabel = openEval.profiles?.company_name || openEval.profiles?.email;
 
     return (
@@ -161,7 +166,10 @@ export default function AdminEvalReviewPanel() {
 
           {reviewRows.map((row, idx) => (
             <div key={row.criterion.id} style={{borderTop:'1px solid #eee6d3', padding:'16px 4px'}}>
-              <div style={{fontWeight:700, fontSize:14.5, marginBottom:4}}>{row.criterion.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>(배점 {row.criterion.max_score})</span></div>
+              <div style={{fontWeight:700, fontSize:14.5, marginBottom:4}}>
+                {row.criterion.content} <span style={{color:'var(--muted)', fontWeight:500, fontSize:12}}>({row.criterion.is_bonus ? '가점' : '배점'} {row.criterion.max_score})</span>
+                {row.criterion.is_bonus && <span className="badge" style={{marginLeft:6, background:'var(--ok-bg)', color:'var(--ok)'}}>가점 항목</span>}
+              </div>
               <div style={{fontSize:13, color:'var(--muted)', whiteSpace:'pre-wrap', marginBottom:10}}>{row.criterion.criteria_text}</div>
               {(row.files && row.files.length > 0) ? (
                 <div style={{display:'flex', flexDirection:'column', gap:6, marginBottom:8}}>
@@ -195,12 +203,21 @@ export default function AdminEvalReviewPanel() {
             </div>
           ))}
 
-          <div style={{
-            display:'flex', justifyContent:'space-between', alignItems:'center',
-            borderTop:'2px solid var(--ink)', marginTop:8, padding:'12px 4px', fontWeight:800, fontSize:15,
-          }}>
-            <span>합계</span>
-            <span>{total} / {maxTotal}</span>
+          <div style={{marginTop:8, borderTop:'2px solid var(--ink)', padding:'12px 4px'}}>
+            <div style={{display:'flex', justifyContent:'space-between', fontSize:13.5, color:'var(--muted)', marginBottom:4}}>
+              <span>기본점수</span>
+              <span>{baseTotal} / {baseMaxTotal}</span>
+            </div>
+            {bonusRows.length > 0 && (
+              <div style={{display:'flex', justifyContent:'space-between', fontSize:13.5, color:'var(--ok)', marginBottom:4}}>
+                <span>가점</span>
+                <span>+{bonusTotal}</span>
+              </div>
+            )}
+            <div style={{display:'flex', justifyContent:'space-between', fontWeight:800, fontSize:16, marginTop:6}}>
+              <span>최종점수</span>
+              <span>{finalTotal}점</span>
+            </div>
           </div>
 
           <div style={{marginTop:18}}>
@@ -239,7 +256,7 @@ export default function AdminEvalReviewPanel() {
               {reviewRows.map((row, idx) => (
                 <tr key={row.criterion.id}>
                   <td style={printTdCenter}>{idx + 1}</td>
-                  <td style={printTd}>{row.criterion.content}</td>
+                  <td style={printTd}>{row.criterion.content}{row.criterion.is_bonus ? ' (가점)' : ''}</td>
                   <td style={{...printTd, whiteSpace:'pre-wrap'}}>{row.criterion.criteria_text}</td>
                   <td style={{...printTd, textAlign:'center'}}>{row.criterion.max_score}</td>
                   <td style={{...printTd, textAlign:'center'}}>{row.response.review_score === '' || row.response.review_score == null ? '-' : row.response.review_score}</td>
@@ -247,10 +264,22 @@ export default function AdminEvalReviewPanel() {
                 </tr>
               ))}
               <tr>
-                <td style={{...printTd, fontWeight:800, background:'#fdecc8', color:'#92400e'}} colSpan={3}>합계</td>
-                <td style={{...printTd, fontWeight:800, textAlign:'center', background:'#fdecc8', color:'#92400e'}}>{maxTotal}</td>
-                <td style={{...printTd, fontWeight:800, textAlign:'center', background:'#fdecc8', color:'#92400e'}}>{total}</td>
-                <td style={{...printTd, background:'#fdecc8'}}></td>
+                <td style={{...printTd, fontWeight:700}} colSpan={3}>기본점수 소계</td>
+                <td style={{...printTd, fontWeight:700, textAlign:'center'}}>{baseMaxTotal}</td>
+                <td style={{...printTd, fontWeight:700, textAlign:'center'}}>{baseTotal}</td>
+                <td style={printTd}></td>
+              </tr>
+              {bonusRows.length > 0 && (
+                <tr>
+                  <td style={{...printTd, fontWeight:700}} colSpan={3}>가점 소계</td>
+                  <td style={printTd}></td>
+                  <td style={{...printTd, fontWeight:700, textAlign:'center', color:'#166534'}}>+{bonusTotal}</td>
+                  <td style={printTd}></td>
+                </tr>
+              )}
+              <tr>
+                <td style={{...printTd, fontWeight:800, background:'#fdecc8', color:'#92400e'}} colSpan={4}>최종점수</td>
+                <td style={{...printTd, fontWeight:800, textAlign:'center', background:'#fdecc8', color:'#92400e'}} colSpan={2}>{finalTotal}점</td>
               </tr>
             </tbody>
           </table>

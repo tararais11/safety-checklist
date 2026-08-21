@@ -10,6 +10,7 @@ import AdminEvalCreatePanel from './components/AdminEvalCreatePanel';
 import AdminEvalReviewPanel from './components/AdminEvalReviewPanel';
 import HomePanel from './components/HomePanel';
 import AnnouncementsPanel from './components/AnnouncementsPanel';
+import ClipIcon from './components/ClipIcon';
 
 const VIEW_TITLES = {
   home: '홈',
@@ -1104,7 +1105,7 @@ function DashboardInner() {
                         <div className={"item-name" + (isDone ? " done" : "")}>{item.name}</div>
                         <div className="item-meta">
                           {isDone ? <span className="badge ok">완료</span> : <span className="badge warn">미완료</span>}
-                          {evidence && <span style={{marginLeft:6}}>📎 {evidence.name}</span>}
+                          {evidence && <span style={{marginLeft:6}}><ClipIcon /> {evidence.name}</span>}
                         </div>
                       </div>
                     )}
@@ -1124,7 +1125,7 @@ function DashboardInner() {
                       {evidence ? (
                         <>
                           <div style={{marginBottom:8}}>
-                            📎 <b>{evidence.name}</b>
+                            <ClipIcon /> <b>{evidence.name}</b>
                           </div>
                           {signedUrls[evidence.path] ? (
                             <>
@@ -1252,7 +1253,7 @@ function DashboardInner() {
                           <div className="item-meta">
                             {done ? <span className="badge ok">완료</span> : <span className="badge warn">미완료</span>}
                             {' '}{selectedYear}년
-                            {yearFiles.length > 0 && <span style={{marginLeft:6}}>📎 첨부 {yearFiles.length}건 {isOpen ? '▲' : '▼'}</span>}
+                            {yearFiles.length > 0 && <span style={{marginLeft:6}}><ClipIcon /> 첨부 {yearFiles.length}건 {isOpen ? '▲' : '▼'}</span>}
                           </div>
                         </div>
                       </div>
@@ -1263,7 +1264,7 @@ function DashboardInner() {
                         }}>
                           {yearFiles.map(([ck, f]) => (
                             <div key={ck} style={{display:'flex', justifyContent:'space-between', gap:10}}>
-                              <span>📎 {f.name} <span style={{color:'var(--muted)'}}>({ck})</span></span>
+                              <span><ClipIcon /> {f.name} <span style={{color:'var(--muted)'}}>({ck})</span></span>
                               {signedUrls[f.path] ? (
                                 <a href={signedUrls[f.path]} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)', flexShrink:0}}>
                                   보기 ↗

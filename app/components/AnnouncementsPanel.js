@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '../../lib/supabase/client';
+import ClipIcon from './ClipIcon';
 
 export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
   const supabase = createClient();
@@ -228,7 +229,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
 
           {existingFile && !removeExistingFile && !newFile && (
             <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:8}}>
-              <span style={{fontSize:13}}>📎 {existingFile.file_name}</span>
+              <span style={{fontSize:13, display:"flex", alignItems:"center", gap:5}}><ClipIcon /> {existingFile.file_name}</span>
               <button className="icon-btn" onClick={() => setRemoveExistingFile(true)}>제거</button>
             </div>
           )}
@@ -236,7 +237,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
             <div style={{fontSize:12.5, color:'var(--muted)', marginBottom:8}}>기존 파일이 제거될 예정이에요.</div>
           )}
           {newFile && (
-            <div style={{fontSize:13, marginBottom:8}}>📎 {newFile.name} <span style={{color:'var(--safety)'}}>(새 파일)</span></div>
+            <div style={{fontSize:13, marginBottom:8, display:"flex", alignItems:"center", gap:5}}><ClipIcon /> {newFile.name} <span style={{color:'var(--safety)'}}>(새 파일)</span></div>
           )}
 
           <label className="add-btn" style={{cursor:'pointer', display:'inline-block', fontSize:12}}>
@@ -302,7 +303,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
 
           {selected.file_url && (
             <div style={{marginTop:20, padding:'12px 14px', background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4}}>
-              <span style={{fontSize:13.5}}>📎 {selected.file_name}</span>{' '}
+              <span style={{fontSize:13.5, display:"inline-flex", alignItems:"center", gap:5}}><ClipIcon /> {selected.file_name}</span>{' '}
               {signedUrl ? (
                 <button onClick={downloadFile} style={{color:'var(--safety)', fontSize:13.5, background:'none', border:'none', cursor:'pointer', padding:0, textDecoration:'underline'}}>
                   다운로드 ↓
@@ -381,7 +382,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
               📌
             </div>
             <div className="item-body">
-              <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}>📎</span>}</div>
+              <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}><ClipIcon size={12} /></span>}</div>
               <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
             </div>
           </div>
@@ -401,7 +402,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
               {regularItems.length - ((page - 1) * PAGE_SIZE + idx)}
             </div>
             <div className="item-body">
-              <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}>📎</span>}</div>
+              <div className="item-name">{a.title} {a.file_url && <span style={{fontSize:12}}><ClipIcon size={12} /></span>}</div>
               <div className="item-meta">{new Date(a.created_at).toLocaleDateString('ko-KR')}</div>
             </div>
           </div>

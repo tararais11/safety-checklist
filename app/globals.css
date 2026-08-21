@@ -106,7 +106,11 @@ body{
 .tab.active .count{background:var(--safety);color:#fff;}
 
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:20px 22px 22px;}
-.panel-scroll{max-height:60vh;overflow-y:auto;}
+.panel-scroll{max-height:60vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--safety) transparent;}
+.panel-scroll::-webkit-scrollbar{width:8px;}
+.panel-scroll::-webkit-scrollbar-track{background:transparent;}
+.panel-scroll::-webkit-scrollbar-thumb{background:var(--safety);border-radius:4px;}
+.panel-scroll::-webkit-scrollbar-thumb:hover{background:var(--safety-dark);}
 .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
 .panel-head h2{font-size:17px;margin:0;font-weight:800;}
 .cycle-label{font-size:11.5px;color:var(--muted);}

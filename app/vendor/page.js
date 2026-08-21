@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 import AnnouncementsPanel from '../components/AnnouncementsPanel';
+import ClipIcon from '../components/ClipIcon';
 
 const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
 
@@ -588,7 +589,7 @@ function EvalRow({ row, readOnly, uploading, onUpload, onRemove, onSaveComment, 
           <div style={{display:'flex', flexDirection:'column', gap:6}}>
             {files.map(f => (
               <div key={f.id} style={{fontSize:13, display:'flex', alignItems:'center', gap:8}}>
-                📎 {f.file_name}{' '}
+                <ClipIcon /> {f.file_name}{' '}
                 {urls[f.file_url] && <a href={urls[f.file_url]} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)'}}>보기 ↗</a>}
                 {!readOnly && (
                   <button className="icon-btn" style={{fontSize:11, padding:'2px 8px'}} onClick={() => onRemove(f)}>삭제</button>

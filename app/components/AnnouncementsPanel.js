@@ -13,6 +13,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
 
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
+  const [newPinned, setNewPinned] = useState(false);
   const [newFile, setNewFile] = useState(null); // 새로 선택한 파일 (업로드 전)
   const [existingFile, setExistingFile] = useState(null); // 수정 중 기존 첨부파일 {file_url, file_name}
   const [removeExistingFile, setRemoveExistingFile] = useState(false);
@@ -86,23 +87,35 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
     if (editingId) {
       const { data, error } = await supabase
         .from('announcements')
-        .update({ title: newTitle.trim(), content: newContent.trim(), file_url, file_name })
+        .update({ title: newTitle.trim(), content: newContent.trim(), file_url, file_name, pinned: newPinned })
         .eq('id', editingId)
         .select();
       setPosting(false);
       if (error) { alert('수정 실패: ' + error.message); return; }
-      setAnnouncements(prev => prev.map(a => a.id === editingId ? data[0] : a));
+      setAnnouncements(prev => {
+        const updated = prev.map(a => a.id === editingId ? data[0] : a);
+        return [...updated].sort((x, y) => {
+          if (x.pinned !== y.pinned) return x.pinned ? -1 : 1;
+          return new Date(y.created_at) - new Date(x.created_at);
+        });
+      });
       setSelected(data[0]);
       resetForm();
       setMode('detail');
     } else {
       const { data, error } = await supabase
         .from('announcements')
-        .insert({ admin_id: user.id, title: newTitle.trim(), content: newContent.trim(), file_url, file_name })
+        .insert({ admin_id: user.id, title: newTitle.trim(), content: newContent.trim(), file_url, file_name, pinned: newPinned })
         .select();
       setPosting(false);
       if (error) { alert('등록 실패: ' + error.message); return; }
-      setAnnouncements(prev => [data[0], ...prev]);
+      setAnnouncements(prev => {
+        const updated = [data[0], ...prev];
+        return updated.sort((x, y) => {
+          if (x.pinned !== y.pinned) return x.pinned ? -1 : 1;
+          return new Date(y.created_at) - new Date(x.created_at);
+        });
+      });
       resetForm();
       setPage(1);
       setMode('list');
@@ -111,7 +124,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
 
   const resetForm = () => {
     setEditingId(null);
-    setNewTitle(''); setNewContent('');
+    setNewTitle(''); setNewContent(''); setNewPinned(false);
     setNewFile(null); setExistingFile(null); setRemoveExistingFile(false);
   };
 
@@ -119,6 +132,7 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
     setEditingId(a.id);
     setNewTitle(a.title);
     setNewContent(a.content || '');
+    setNewPinned(!!a.pinned);
     setExistingFile(a.file_url ? { file_url: a.file_url, file_name: a.file_name } : null);
     setNewFile(null);
     setRemoveExistingFile(false);
@@ -181,6 +195,15 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
           rows={10}
           style={{width:'100%', marginBottom:14, padding:'12px', border:'1px solid var(--line)', borderRadius:4, fontSize:14, fontFamily:'inherit', resize:'vertical', lineHeight:1.6}}
         />
+
+        <label style={{display:'flex', alignItems:'center', gap:8, marginBottom:14, fontSize:13.5, cursor:'pointer'}}>
+          <input
+            type="checkbox"
+            checked={newPinned}
+            onChange={e => setNewPinned(e.target.checked)}
+          />
+          📌 상단 고정
+        </label>
 
         <div style={{marginBottom:18, padding:'12px 14px', background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4}}>
           <div style={{fontSize:12, fontWeight:700, color:'var(--muted)', marginBottom:8}}>첨부파일 (선택)</div>

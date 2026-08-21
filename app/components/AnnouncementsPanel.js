@@ -56,6 +56,24 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
     }
   }, [mode, selected, supabase]);
 
+  const downloadFile = async () => {
+    if (!signedUrl || !selected) return;
+    try {
+      const resp = await fetch(signedUrl);
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = selected.file_name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      alert('다운로드 중 오류가 발생했어요: ' + e.message);
+    }
+  };
+
   const saveAnnouncement = async () => {
     if (!newTitle.trim()) return;
     const confirmMsg = editingId ? '수정하시겠습니까?' : '등록하시겠습니까?';
@@ -286,9 +304,9 @@ export default function AnnouncementsPanel({ isAdmin, openAnnouncementId }) {
             <div style={{marginTop:20, padding:'12px 14px', background:'#fbfaf6', border:'1px solid var(--line)', borderRadius:4}}>
               <span style={{fontSize:13.5}}>📎 {selected.file_name}</span>{' '}
               {signedUrl ? (
-                <a href={signedUrl} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)', fontSize:13.5}}>
-                  열어서 보기 ↗
-                </a>
+                <button onClick={downloadFile} style={{color:'var(--safety)', fontSize:13.5, background:'none', border:'none', cursor:'pointer', padding:0, textDecoration:'underline'}}>
+                  다운로드 ↓
+                </button>
               ) : (
                 <span style={{fontSize:12.5, color:'var(--muted)'}}>링크 불러오는 중...</span>
               )}

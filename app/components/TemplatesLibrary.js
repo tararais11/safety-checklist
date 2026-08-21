@@ -61,7 +61,7 @@ export default function TemplatesLibrary({ note }) {
   return (
     <>
       {note && (
-        <div className="footer-note" style={{marginBottom:14, background:'#fdecc8', border:'1px solid #f0d9a8', borderRadius:4, padding:'10px 14px', color:'#92400e'}}>
+        <div style={{marginBottom:14, background:'var(--safety-dim)', border:'1.5px solid var(--safety)', borderRadius:4, padding:'12px 16px', color:'var(--safety)', fontWeight:700, fontSize:13.5}}>
           {note}
         </div>
       )}

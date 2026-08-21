@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '../../lib/supabase/client';
+import ClipIcon from './ClipIcon';
 
 const statusLabel = { pending: '대기중', submitted: '제출완료', reviewed: '검토완료' };
 
@@ -346,7 +347,7 @@ function ResponseFileLink({ path, name, getSignedUrl }) {
   const [url, setUrl] = useState(null);
   useEffect(() => { getSignedUrl(path).then(setUrl); }, [path]);
   return url ? (
-    <a href={url} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)', fontSize:13}}>📎 {name} — 열어서 보기 ↗</a>
+    <a href={url} target="_blank" rel="noopener noreferrer" style={{color:'var(--safety)', fontSize:13, display:'inline-flex', alignItems:'center', gap:5}}><ClipIcon /> {name} — 열어서 보기 ↗</a>
   ) : (
     <div style={{fontSize:12.5, color:'var(--muted)'}}>파일 링크 불러오는 중...</div>
   );

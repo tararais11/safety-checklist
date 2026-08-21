@@ -443,6 +443,17 @@ export default function VendorPage() {
               </>
             ) : view === 'home' ? (
               <>
+                <div style={{
+                  background:'var(--ink)', color:'#fff', borderRadius:10, padding:'24px 28px', marginBottom:20,
+                }}>
+                  <div style={{fontSize:19, fontWeight:800}}>
+                    안녕하세요, {companyName || fullName || userEmail}님
+                  </div>
+                  <div style={{fontSize:13, color:'#c7cbd6', marginTop:4}}>
+                    {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+                  </div>
+                </div>
+
                 <div className="masthead">
                   <div>
                     <h1>홈</h1>

@@ -7,6 +7,9 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 import AnnouncementsPanel from '../components/AnnouncementsPanel';
 import ClipIcon from '../components/ClipIcon';
+import LawSearchPanel from '../components/LawSearchPanel';
+import TemplatesLibrary from '../components/TemplatesLibrary';
+import SettingsModal from '../components/SettingsModal';
 
 const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
 
@@ -28,7 +31,8 @@ export default function VendorPage() {
   const [companyName, setCompanyName] = useState('');
   const [evaluations, setEvaluations] = useState([]);
 
-  const [view, setView] = useState('home'); // 'home' | 'inprogress' | 'results' | 'announcements'
+  const [view, setView] = useState('home'); // 'home' | 'inprogress' | 'results' | 'announcements' | 'templates' | 'lawsearch'
+  const [showSettings, setShowSettings] = useState(false);
   const [openEval, setOpenEval] = useState(null);
   const [showSubmittedDetail, setShowSubmittedDetail] = useState(false);
   const [openAnnouncementId, setOpenAnnouncementId] = useState(null);
@@ -218,9 +222,21 @@ export default function VendorPage() {
           <span className="topbar-global-email">
             {fullName && companyName ? `${fullName}-${companyName}` : (fullName || companyName || userEmail)}
           </span>
+          <button
+            className="topbar-global-logout"
+            style={{padding:'7px 12px', fontSize:15}}
+            onClick={() => setShowSettings(true)}
+            title="개인 설정"
+          >
+            ⚙️
+          </button>
           <button className="topbar-global-logout" onClick={handleLogout}>로그아웃</button>
         </div>
       </div>
+
+      {showSettings && (
+        <SettingsModal userEmail={userEmail} onClose={() => setShowSettings(false)} />
+      )}
 
       <div className="app-body">
         <aside className="sidebar">
@@ -236,6 +252,12 @@ export default function VendorPage() {
             </div>
             <div className={"sidebar-nav-item" + (view === 'results' && !openEval ? " active" : "")} onClick={() => { setView('results'); setOpenEval(null); }}>
               <span>📊</span> 평가결과
+            </div>
+            <div className={"sidebar-nav-item" + (view === 'lawsearch' && !openEval ? " active" : "")} onClick={() => { setView('lawsearch'); setOpenEval(null); }}>
+              <span>⚖️</span> 법령검색
+            </div>
+            <div className={"sidebar-nav-item" + (view === 'templates' && !openEval ? " active" : "")} onClick={() => { setView('templates'); setOpenEval(null); }}>
+              <span>📁</span> 양식함
             </div>
           </nav>
         </aside>
@@ -512,6 +534,28 @@ export default function VendorPage() {
                 </div>
                 <div className="stripe"></div>
                 <AnnouncementsPanel isAdmin={false} openAnnouncementId={openAnnouncementId} />
+              </>
+            ) : view === 'lawsearch' ? (
+              <>
+                <div className="masthead">
+                  <div>
+                    <h1>법령검색</h1>
+                    <div className="sub">산업안전보건법 등 관련 법령 조문을 확인하세요</div>
+                  </div>
+                </div>
+                <div className="stripe"></div>
+                <LawSearchPanel />
+              </>
+            ) : view === 'templates' ? (
+              <>
+                <div className="masthead">
+                  <div>
+                    <h1>양식함</h1>
+                    <div className="sub">회사에서 올려둔 참고 양식을 다운로드하세요</div>
+                  </div>
+                </div>
+                <div className="stripe"></div>
+                <TemplatesLibrary note="⚠ 이 양식은 참고용 예시예요. 실제 제출 전에는 반드시 협력업체 상황에 맞게 내용을 수정해서 사용해주세요." />
               </>
             ) : (
               <>

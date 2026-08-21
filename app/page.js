@@ -1074,6 +1074,7 @@ function DashboardInner() {
 
             {periodItems.length === 0 && <div className="empty">항목이 없습니다. 아래에서 추가해보세요.</div>}
 
+            <div className="panel-scroll">
             {periodItems.map((item, idx) => {
               const isDone = !!doneMap[item.id]?.has(cycleKey);
               const evidence = fileMap[item.id]?.[cycleKey];
@@ -1174,6 +1175,7 @@ function DashboardInner() {
                 </div>
               );
             })}
+            </div>
 
             <div className="add-row">
               <input
@@ -1402,7 +1404,7 @@ function DashboardInner() {
             </label>
           </div>
 
-          <div className="panel">
+          <div className="panel panel-scroll">
           {filteredTemplates.length === 0 && <div className="empty">이 카테고리에는 아직 올린 양식이 없어요.</div>}
 
           {filteredTemplates.map((tpl, idx) => (

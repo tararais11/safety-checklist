@@ -74,7 +74,7 @@ export default function TemplatesLibrary({ note }) {
         ))}
       </div>
 
-      <div className="panel">
+      <div className="panel panel-scroll">
         {filteredTemplates.length === 0 && <div className="empty">이 카테고리에는 아직 올라온 양식이 없어요.</div>}
         {filteredTemplates.map(tpl => (
           <div className="item" key={tpl.id}>

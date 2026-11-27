@@ -7,63 +7,17 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 import SiteFooter from '../components/SiteFooter';
 import SiteHeader from '../components/SiteHeader';
+import NetArt from '../components/NetArt';
+import { LINE_ICONS } from '../components/LineIcons';
 
 // ── 아래는 첫 화면에 보여 주는 문구 (표시용, 동작 없음) ──
 
-// '주요 기능' 큰 숫자
-const STRENGTHS = [
-  { num: '6', unit: '단계', title: '주기별 점검', desc: '일일 · 주간 · 월간 · 분기 · 반기 · 연간 점검 항목을 체크하고 완료 증빙을 남깁니다.' },
-  { num: '3', unit: '단계', title: '협력업체 평가', desc: '평가 배정, 협력업체 제출, 관리자 검토까지 한 흐름으로 관리합니다.' },
-  { num: '3', unit: '개 법령', title: '법령검색', desc: '산업안전보건법과 시행규칙, 중대재해처벌법의 주요 조문을 바로 확인합니다.' },
-  { num: '3', unit: '개 분류', title: '양식함', desc: '일반 · 현장서류 · 중대재해처벌법 분류로 서식을 모으고, 새 분류도 만들 수 있습니다.' },
-];
-
-// '업무 안내' 카드
+// 'SAFETY SERVICES' 카드
 const GUIDE = [
-  {
-    title: '주기별 체크리스트',
-    desc: '일일부터 연간까지 주기별 점검 항목을 체크하고, 완료 증빙자료를 함께 남깁니다.',
-    list: ['항목 추가 · 수정 · 순서 변경', 'PDF · 사진 증빙 첨부', '연도별 완료 기록 확인'],
-    who: '관리자',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1" /><path d="M9 12l2 2 4-4" /><path d="M9 17h6" />
-      </svg>
-    ),
-  },
-  {
-    title: '협력업체 평가',
-    desc: '관리자가 평가를 배정하면 협력업체가 증빙자료를 올려 제출하고, 관리자가 검토합니다.',
-    list: ['평가 양식 만들기 · 배정', '증빙자료 첨부 · 제출', '검토 결과 확인 · PDF 저장'],
-    who: '관리자 · 협력업체',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="9" cy="8" r="3" /><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M16 4.5a3 3 0 0 1 0 6" /><path d="M18 14c2 .8 3 2.8 3 6" />
-      </svg>
-    ),
-  },
-  {
-    title: '법령검색',
-    desc: '산업안전보건법과 시행규칙, 중대재해처벌법의 주요 조문을 바로 확인합니다.',
-    list: ['조문을 누르면 원문이 바로 펼쳐짐', '법령별 탭으로 나눠 보기'],
-    who: '모든 사용자',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3v18" /><path d="M7 21h10" /><path d="M5 7h14" /><path d="M5 7L2 13a3 3 0 0 0 6 0L5 7z" /><path d="M19 7l-3 6a3 3 0 0 0 6 0l-3-6z" />
-      </svg>
-    ),
-  },
-  {
-    title: '양식함',
-    desc: '자주 쓰는 안전보건 서식을 분류별로 모아 두고 필요할 때 내려받습니다.',
-    list: ['일반 · 현장서류 · 중대재해처벌법', '새 분류 만들기', '양식 올리기 · 내려받기'],
-    who: '모든 사용자',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M8 13h8" />
-      </svg>
-    ),
-  },
+  { icon: 'checklist', title: '주기별 체크리스트', desc: '일일부터 연간까지 주기별 점검 항목을 체크하고, 완료 증빙자료(PDF · 사진)를 남깁니다.', who: '관리자' },
+  { icon: 'eval', title: '협력업체 평가', desc: '관리자가 평가를 배정하면 협력업체가 증빙자료를 올려 제출하고, 관리자가 검토합니다.', who: '관리자 · 협력업체' },
+  { icon: 'law', title: '법령검색', desc: '산업안전보건법과 시행규칙, 중대재해처벌법의 주요 조문을 바로 확인합니다.', who: '모든 사용자' },
+  { icon: 'folder', title: '양식함', desc: '자주 쓰는 안전보건 서식을 분류별로 모아 두고 필요할 때 내려받습니다.', who: '모든 사용자' },
 ];
 
 // '이용 절차' 단계 (key: 관리자가 처리하는 단계)
@@ -153,27 +107,26 @@ export default function LoginPage() {
         ]}
         groups={[
           { key: 'intro', label: '시스템 소개', href: '#intro' },
-          { key: 'features', label: '주요 기능', href: '#features' },
-          { key: 'guide', label: '업무 안내', href: '#guide' },
+          { key: 'services', label: '주요 서비스', href: '#services' },
           { key: 'process', label: '이용 절차', href: '#process' },
           { key: 'faq', label: '자주 묻는 질문', href: '#faq' },
         ]}
         onBrandClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        right={<><small>이용 문의</small><b>안전보건관리팀</b></>}
+        right={<span className="today"><i>문의</i>안전보건관리팀</span>}
       />
 
-      <section className="hero" id="intro">
-        <div className="hero-photo"><img src="/img/hero-site.jpg" alt="" /></div>
+      <section className="hero hero-login" id="intro">
+        <div className="hero-photo"><img src="/img/hero-ict.jpg" alt="" /></div>
         <div className="wrap hero-split">
           <div className="hero-inner">
-            <p className="label">산업안전보건법 · 중대재해처벌법 대응</p>
-            <h1>현장의 안전보건 업무,<br /><em>한 곳에서 관리합니다.</em></h1>
+            <p className="chip">오파스넷 안전보건 통합관리시스템</p>
+            <h1>정보통신 현장의 안전,<br />한 곳에서 관리합니다</h1>
+            <p className="hero-en">SAFETY &amp; HEALTH MANAGEMENT SYSTEM</p>
             <p className="lead">주기별 점검과 증빙자료, 협력업체 평가, 법령과 양식까지 <br />안전보건 업무를 한 시스템에서 확인하고 기록합니다.</p>
             <div className="hero-btns">
               <a href="#login-box" className="btn btn-red" onClick={() => { setMode('login'); setMsg(null); }}>로그인</a>
               <a href="#login-box" className="btn btn-ghost" onClick={() => { setMode('signup'); setMsg(null); }}>회원가입 신청</a>
             </div>
-            <div className="since"><b>처음이신가요?</b> 가입 신청 후 관리자 승인을 받으면 이용할 수 있어요.</div>
           </div>
 
       <div className="auth-card login-card" id="login-box">
@@ -234,84 +187,52 @@ export default function LoginPage() {
         {mode === 'signup' && <div className="auth-help">가입 신청 후 관리자 승인이 끝나면 로그인할 수 있어요.</div>}
       </div>
         </div>
-
-        <div className="facts">
-          <div className="wrap">
-            <dl>
-              <div className="f"><dt>점검 주기</dt><dd>일일 ~ 연간 6단계</dd></div>
-              <div className="f"><dt>증빙자료</dt><dd>PDF · 사진 첨부</dd></div>
-              <div className="f"><dt>협력업체 평가</dt><dd>배정 · 제출 · 검토</dd></div>
-              <div className="f"><dt>법령검색</dt><dd>주요 조문 바로 보기</dd></div>
-              <div className="f"><dt>양식함</dt><dd>분류별 서식 공유</dd></div>
-            </dl>
-          </div>
-        </div>
       </section>
 
-      <section className="section" id="features">
+      <section className="section dark" id="services">
+        <NetArt />
         <div className="wrap">
-          <div className="sec-head">
-            <p className="label">주요 기능</p>
-            <h2>안전보건 업무에 필요한 기능을<br />한 시스템에 모았습니다</h2>
+          <div className="sec-tit light">
+            <h2>SAFETY SERVICES</h2>
+            <p>정보통신 현장의 안전보건 업무를 한 시스템에서 처리합니다.<br />로그인하면 역할에 맞는 메뉴가 열립니다.</p>
           </div>
-          <div className="strengths">
-            {STRENGTHS.map(s => (
-              <div key={s.title}>
-                <p className="num">{s.num}<small>{s.unit}</small></p>
-                <h3>{s.title}</h3>
-                <p>{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section soft" id="guide">
-        <div className="wrap">
-          <div className="sec-head">
-            <p className="label">업무 안내</p>
-            <h2>어떤 업무를 하시나요?</h2>
-            <p>로그인하면 역할에 맞는 메뉴가 열립니다. 관리자와 협력업체는 볼 수 있는 화면이 다릅니다.</p>
-          </div>
-          <div className="cards two">
+          <div className="svc-grid" style={{ '--n': GUIDE.length }}>
             {GUIDE.map(g => (
-              <div className="card" key={g.title}>
-                <div className="icon">{g.icon}</div>
+              <div className="svc" key={g.title}>
+                <span className="svc-ico">{LINE_ICONS[g.icon]}</span>
                 <h3>{g.title}</h3>
-                <div>
-                  <p>{g.desc}</p>
-                  <ul style={{ marginTop: 14 }}>{g.list.map(t => <li key={t}>{t}</li>)}</ul>
-                </div>
-                <div className="go">이용 대상 · {g.who}</div>
+                <p>{g.desc}</p>
+                <span className="svc-who">이용 대상 · {g.who}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="section" id="process">
+      <section className="section board" id="process">
         <div className="wrap">
-          <div className="sec-head">
-            <p className="label">이용 절차</p>
-            <h2>가입 신청 후 관리자 승인을 거쳐<br />이용할 수 있습니다</h2>
+          <div className="sec-tit">
+            <h2>HOW TO START</h2>
+            <p>가입 신청 후 관리자 승인을 거쳐 이용할 수 있습니다.</p>
           </div>
-          <ol className="steps">
-            {STEPS.map(s => (
+          <ol className="step-boxes">
+            {STEPS.map((s, i) => (
               <li key={s.title} className={s.key ? 'key' : undefined}>
+                <span className="step-no">STEP {String(i + 1).padStart(2, '0')}</span>
                 <b>{s.title}</b>
-                <span>{s.desc}</span>
+                <span className="step-desc">{s.desc}</span>
+                {s.key && <span className="step-tag">관리자 처리</span>}
               </li>
             ))}
           </ol>
-          <p className="steps-note"><i />빨간 원은 관리자가 처리하는 단계입니다.</p>
         </div>
       </section>
 
-      <section className="section soft" id="faq">
+      <section className="section" id="faq">
         <div className="wrap">
-          <div className="sec-head">
-            <p className="label">자주 묻는 질문</p>
-            <h2>이용 전에 확인하세요</h2>
+          <div className="sec-tit">
+            <h2>FAQ</h2>
+            <p>이용 전에 자주 묻는 질문을 확인하세요.</p>
           </div>
           <div className="faq">
             {FAQ.map(f => (
@@ -321,19 +242,21 @@ export default function LoginPage() {
               </details>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="cta">
-        <div className="wrap cta-row">
-          <div>
-            <p className="label">시작하기</p>
-            <h2>안전보건 업무, 지금 시작하세요.</h2>
-            <p className="cta-sub">계정이 있으면 로그인하고, 처음이면 회원가입을 신청하세요.</p>
-          </div>
-          <div className="cta-btns">
-            <a href="#login-box" className="btn btn-white" onClick={() => { setMode('login'); setMsg(null); }}>로그인</a>
-            <a href="#login-box" className="btn btn-ghost" onClick={() => { setMode('signup'); setMsg(null); }}>회원가입 신청</a>
+          <div className="link-boxes">
+            <a href="#login-box" className="link-box" onClick={() => { setMode('signup'); setMsg(null); }}>
+              <span className="quick-ico">{LINE_ICONS.eval}</span>
+              <span className="quick-txt"><b>회원가입 신청</b><small>처음이면 가입을 신청하세요.</small></span>
+              <span className="quick-go" aria-hidden="true">→</span>
+            </a>
+            <a href="#login-box" className="link-box" onClick={() => { setMode('login'); setMsg(null); }}>
+              <span className="quick-ico">{LINE_ICONS.shield}</span>
+              <span className="quick-txt"><b>로그인</b><small>승인된 계정으로 로그인하세요.</small></span>
+              <span className="quick-go" aria-hidden="true">→</span>
+            </a>
+            <div className="link-box">
+              <span className="quick-ico">{LINE_ICONS.notice}</span>
+              <span className="quick-txt"><b>이용 문의</b><small>안전보건관리팀으로 문의하세요.</small></span>
+            </div>
           </div>
         </div>
       </section>

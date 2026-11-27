@@ -3,8 +3,8 @@
 import { useState } from 'react';
 
 // 공통 머리글 (화면 모양 전용)
-// - 맨 위 작은 띠: gabia.com처럼 로그인·회원가입 / 이름·설정·로그아웃
-// - 로고 + 큰 메뉴 + 마우스를 올리면 펼쳐지는 전체 메뉴: kfenc.com 방식
+// - 맨 위 작은 띠: 로그인·회원가입 / 이름·설정·로그아웃
+// - 로고 + 가운데 메뉴 + 마우스를 올리면 펼쳐지는 전체 메뉴 (오파스넷 홈페이지 느낌)
 // - 휴대폰에서는 오른쪽 위 메뉴 버튼으로 열고 닫아요
 //
 // util:   [{ text }] 또는 [{ label, onClick, href, on, title }]
@@ -24,7 +24,7 @@ export default function SiteHeader({ util = [], groups = [], onBrandClick, right
   return (
     <header className="site-header">
       <div className="util-bar">
-        <div className="wrap util-in">
+        <div className="head-wide util-in">
           {util.map((u, i) => u.text ? (
             <span key={i} className="util-user">{u.text}</span>
           ) : (
@@ -35,7 +35,7 @@ export default function SiteHeader({ util = [], groups = [], onBrandClick, right
         </div>
       </div>
 
-      <div className="wrap head-row">
+      <div className="head-wide head-row">
         <a href="#" className="logo" onClick={e => { e.preventDefault(); if (onBrandClick) onBrandClick(); }}>
           <img
             src="/logo.gif"
@@ -49,10 +49,7 @@ export default function SiteHeader({ util = [], groups = [], onBrandClick, right
               }
             }}
           />
-          <span className="logo-txt">
-            <b>안전보건 <em>통합관리시스템</em></b>
-            <small>SAFETY &amp; HEALTH MANAGEMENT</small>
-          </span>
+          <span className="logo-txt">안전보건 통합관리시스템</span>
         </a>
 
         <nav className="gnb" aria-label="주 메뉴">
@@ -65,7 +62,7 @@ export default function SiteHeader({ util = [], groups = [], onBrandClick, right
           </ul>
           {hasMega && (
             <div className="mega">
-              <div className="wrap head-row">
+              <div className="head-wide head-row">
                 <div />
                 <div className="mega-cols">
                   {groups.map(g => (
@@ -121,13 +118,8 @@ export default function SiteHeader({ util = [], groups = [], onBrandClick, right
   );
 }
 
-// 머리글 오른쪽: 오늘 날짜 (kfenc의 대표번호 자리)
+// 머리글 오른쪽: 오늘 날짜
 export function TodayBadge() {
   const today = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
-  return (
-    <>
-      <small>오늘</small>
-      <b>{today}</b>
-    </>
-  );
+  return <span className="today"><i>TODAY</i>{today}</span>;
 }

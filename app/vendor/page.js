@@ -13,7 +13,8 @@ import SettingsModal from '../components/SettingsModal';
 import SiteFooter from '../components/SiteFooter';
 import SiteHeader, { TodayBadge } from '../components/SiteHeader';
 import PageHead from '../components/PageHead';
-import PlanArt from '../components/PlanArt';
+import NetArt from '../components/NetArt';
+import { LINE_ICONS } from '../components/LineIcons';
 
 const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
 
@@ -225,16 +226,17 @@ export default function VendorPage() {
     { key: 'lib', label: '자료실', active: (view === 'lawsearch' || view === 'templates') && !openEval, onClick: goLaw, items: libTabs },
   ];
   const homeLinks = [
-    { key: 'a', dt: '회사 소식', dd: '공지사항', go: goAnnouncements },
-    { key: 'i', dt: '제출할 평가', dd: '평가진행', go: goInprogress },
-    { key: 'r', dt: '검토 완료', dd: '평가결과', go: goResults },
-    { key: 'l', dt: '법령 조문', dd: '법령검색', go: goLaw },
-    { key: 't', dt: '서식 내려받기', dd: '양식함', go: goTemplates },
+    { key: 'a', icon: 'notice', title: '공지사항', desc: '회사 소식', go: goAnnouncements },
+    { key: 'i', icon: 'checklist', title: '평가진행', desc: '제출할 평가', go: goInprogress },
+    { key: 'r', icon: 'result', title: '평가결과', desc: '검토 완료', go: goResults },
+    { key: 'l', icon: 'law', title: '법령검색', desc: '법령 조문', go: goLaw },
+    { key: 't', icon: 'folder', title: '양식함', desc: '서식 내려받기', go: goTemplates },
   ];
   const homeCards = [
-    { key: 'i', title: '평가 작성 · 제출', desc: '배정된 평가 항목에 증빙자료와 의견을 올리고 관리자에게 제출합니다.', list: ['항목별 증빙자료 첨부', '의견 작성 · 임시 저장', '제출 후 진행 상태 확인'], go: '평가진행 바로가기', fn: goInprogress },
-    { key: 'r', title: '평가 결과', desc: '관리자 검토가 끝난 평가의 결과를 확인합니다.', list: ['검토 완료된 평가 목록', '항목별 점수 · 합계 확인', 'PDF로 저장(인쇄)'], go: '평가결과 보기', fn: goResults },
-    { key: 'l', title: '자료실', desc: '관련 법령의 주요 조문과 회사에서 올려둔 참고 양식을 확인합니다.', list: ['산업안전보건법 · 중대재해처벌법 조문', '참고 양식 내려받기'], go: '법령검색 바로가기', fn: goLaw },
+    { key: 'i', icon: 'checklist', title: '평가 작성 · 제출', desc: '배정된 평가 항목에 증빙자료와 의견을 올리고 관리자에게 제출합니다.', fn: goInprogress },
+    { key: 'r', icon: 'result', title: '평가 결과', desc: '검토가 끝난 평가의 항목별 점수와 합계를 확인하고 PDF로 저장합니다.', fn: goResults },
+    { key: 'l', icon: 'law', title: '법령검색', desc: '산업안전보건법 등 관련 법령의 주요 조문을 바로 확인합니다.', fn: goLaw },
+    { key: 't', icon: 'folder', title: '양식함', desc: '회사에서 올려둔 참고 양식을 내려받습니다.', fn: goTemplates },
   ];
   const click = (fn) => (e) => { e.preventDefault(); fn(); };
 
@@ -459,44 +461,39 @@ export default function VendorPage() {
             ) : view === 'home' ? (
               <>
                 <section className="hero">
-                  <div className="hero-photo"><img src="/img/hero-site.jpg" alt="" /></div>
-                  <PlanArt className="plan-hero" />
-                  <div className="wrap">
-                    <div className="hero-inner">
-                      <p className="label">안전보건 통합관리시스템 · 협력업체</p>
-                      <h1>
-                        안녕하세요, {companyName && fullName ? `${companyName} ${fullName}` : (companyName || fullName || userEmail)}님<br />
-                        <em>함께 안전한 현장을 만들어요.</em>
-                      </h1>
-                      <p className="lead">
-                        {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}{' '}<br />
-                        공지사항과 진행 중인 평가를 확인하고, 평가 자료를 제출하세요.
-                      </p>
-                      <div className="hero-btns">
-                        <a href="#" className="btn btn-red" onClick={click(goInprogress)}>평가 작성하기</a>
-                        <a href="#" className="btn btn-ghost" onClick={click(goResults)}>평가결과 보기</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="facts">
-                    <div className="wrap">
-                      <div className="facts-list" style={{ '--n': homeLinks.length }}>
-                        {homeLinks.map(l => (
-                          <a key={l.key} href="#" className="f" onClick={click(l.go)}>
-                            <span className="dt">{l.dt}</span>
-                            <span className="dd">{l.dd}</span>
-                          </a>
-                        ))}
-                      </div>
+                  <div className="hero-photo"><img src="/img/hero-ict.jpg" alt="" /></div>
+                  <div className="hero-inner">
+                    <p className="chip">오파스넷 안전보건 통합관리시스템 · 협력업체</p>
+                    <h1>안녕하세요, {companyName && fullName ? `${companyName} ${fullName}` : (companyName || fullName || userEmail)}님</h1>
+                    <p className="hero-en">SAFE NETWORK, SAFE WORKPLACE</p>
+                    <p className="lead">
+                      {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}{' '}<br />
+                      공지사항과 진행 중인 평가를 확인하고, 평가 자료를 제출하세요.
+                    </p>
+                    <div className="hero-btns">
+                      <a href="#" className="btn btn-red" onClick={click(goInprogress)}>평가 작성하기</a>
+                      <a href="#" className="btn btn-ghost" onClick={click(goResults)}>평가결과 보기</a>
                     </div>
                   </div>
                 </section>
 
-                <section className="section">
+                <div className="quick">
+                  <div className="wrap quick-grid" style={{ '--n': homeLinks.length }}>
+                    {homeLinks.map(l => (
+                      <a key={l.key} href="#" className="quick-box" onClick={click(l.go)}>
+                        <span className="quick-ico">{LINE_ICONS[l.icon]}</span>
+                        <span className="quick-txt"><b>{l.title}</b><small>{l.desc}</small></span>
+                        <span className="quick-go" aria-hidden="true">→</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                <section className="section board">
                   <div className="wrap">
-                    <div className="sec-head">
-                      <p className="label">알림</p>
-                      <h2>지금 확인할 일</h2>
+                    <div className="sec-tit">
+                      <h2>TODAY&apos;S TASKS</h2>
+                      <p>지금 확인할 공지와 진행 중인 평가입니다.</p>
                     </div>
                 <div className="home-grid">
                   <div className="panel">
@@ -539,45 +536,24 @@ export default function VendorPage() {
                   </div>
                 </section>
 
-                <section className="section soft">
+                <section className="section dark">
+                  <NetArt />
                   <div className="wrap">
-                    <div className="sec-head">
-                      <p className="label">주요 업무</p>
-                      <h2>필요한 업무로 바로 이동하세요</h2>
-                      <p>카드를 누르면 해당 화면으로 이동합니다.</p>
+                    <div className="sec-tit light">
+                      <h2>SAFETY SERVICES</h2>
+                      <p>필요한 업무를 골라 바로 이동하세요.</p>
                     </div>
-                    <div className="cards">
+                    <div className="svc-grid" style={{ '--n': homeCards.length }}>
                       {homeCards.map(c => (
-                        <a key={c.key} href="#" className="card" onClick={click(c.fn)}>
-                          <div className="icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                              {c.key === 'l'
-                                ? <><path d="M12 3v18" /><path d="M7 21h10" /><path d="M5 7h14" /><path d="M5 7L2 13a3 3 0 0 0 6 0L5 7z" /><path d="M19 7l-3 6a3 3 0 0 0 6 0l-3-6z" /></>
-                                : <><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1" /><path d="M9 12l2 2 4-4" /><path d="M9 17h6" /></>}
-                            </svg>
-                          </div>
+                        <a key={c.key} href="#" className="svc" onClick={click(c.fn)}>
+                          <span className="svc-ico">{LINE_ICONS[c.icon]}</span>
                           <h3>{c.title}</h3>
-                          <div>
-                            <p>{c.desc}</p>
-                            <ul style={{ marginTop: 14 }}>{c.list.map(t => <li key={t}>{t}</li>)}</ul>
-                          </div>
-                          <div className="go">{c.go} →</div>
+                          <p>{c.desc}</p>
+                          <span className="svc-go" aria-hidden="true">→</span>
                         </a>
                       ))}
                     </div>
-                  </div>
-                </section>
-
-                <section className="cta">
-                  <div className="wrap cta-row">
-                    <div>
-                      <p className="label">안전 수칙</p>
-                      <h2>위험하다고 느끼면 먼저 멈추고 알려주세요.</h2>
-                      <p className="cta-sub">현장 관리감독자에게 바로 알리면 함께 조치합니다.</p>
-                    </div>
-                    <div className="cta-btns">
-                      <a href="#" className="btn btn-white" onClick={click(goAnnouncements)}>공지사항 보기</a>
-                    </div>
+                    <p className="safety-note">위험하다고 느끼면 먼저 멈추고, 현장 관리감독자에게 바로 알려주세요.</p>
                   </div>
                 </section>
               </>

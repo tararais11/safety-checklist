@@ -10,6 +10,7 @@ import ClipIcon from '../components/ClipIcon';
 import LawSearchPanel from '../components/LawSearchPanel';
 import TemplatesLibrary from '../components/TemplatesLibrary';
 import SettingsModal from '../components/SettingsModal';
+import SiteFooter from '../components/SiteFooter';
 
 const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
 
@@ -201,67 +202,51 @@ export default function VendorPage() {
 
   return (
     <div className="app-shell">
-      <div className="topbar-global">
-        <div className="topbar-global-brand" style={{cursor:'pointer'}} onClick={() => { setView('home'); setOpenEval(null); }}>
-          <img
-            src="/logo.gif"
-            alt="회사 로고"
-            style={{height:38, marginRight:4}}
-            onError={e => {
-              if (!e.currentTarget.dataset.retried) {
-                e.currentTarget.dataset.retried = '1';
-                e.currentTarget.src = '/logo.gif?retry=' + Date.now();
-              } else {
-                e.currentTarget.style.display = 'none';
-              }
-            }}
-          />
-          <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
+      <header className="site-header">
+        <div className="util-bar">
+          <div className="site-container util-in">
+            <span className="util-user">
+              {fullName && companyName ? `${fullName}-${companyName}` : (fullName || companyName || userEmail)}님
+            </span>
+            <button className="util-link" onClick={() => setShowSettings(true)} title="개인 설정">설정</button>
+            <button className="util-link" onClick={handleLogout}>로그아웃</button>
+          </div>
         </div>
-        <div className="topbar-global-right">
-          <span className="topbar-global-email">
-            {fullName && companyName ? `${fullName}-${companyName}` : (fullName || companyName || userEmail)}
-          </span>
-          <button
-            className="topbar-global-logout"
-            style={{padding:'7px 12px', fontSize:15}}
-            onClick={() => setShowSettings(true)}
-            title="개인 설정"
-          >
-            ⚙️
-          </button>
-          <button className="topbar-global-logout" onClick={handleLogout}>로그아웃</button>
+        <div className="gnb">
+          <div className="site-container gnb-in">
+            <div className="topbar-global-brand" style={{cursor:'pointer'}} onClick={() => { setView('home'); setOpenEval(null); }}>
+              <img
+                src="/logo.gif"
+                alt="회사 로고"
+                className="brand-logo"
+                onError={e => {
+                  if (!e.currentTarget.dataset.retried) {
+                    e.currentTarget.dataset.retried = '1';
+                    e.currentTarget.src = '/logo.gif?retry=' + Date.now();
+                  } else {
+                    e.currentTarget.style.display = 'none';
+                  }
+                }}
+              />
+              <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
+            </div>
+            <nav className="gnb-menu">
+              <div className={"gnb-item" + (view === 'home' && !openEval ? " active" : "")} onClick={() => { setView('home'); setOpenEval(null); }}>홈</div>
+              <div className={"gnb-item" + (view === 'announcements' && !openEval ? " active" : "")} onClick={() => { setOpenAnnouncementId(null); setView('announcements'); setOpenEval(null); }}>공지사항</div>
+              <div className={"gnb-item" + (view === 'inprogress' && !openEval ? " active" : "")} onClick={() => { setView('inprogress'); setOpenEval(null); }}>평가진행</div>
+              <div className={"gnb-item" + (view === 'results' && !openEval ? " active" : "")} onClick={() => { setView('results'); setOpenEval(null); }}>평가결과</div>
+              <div className={"gnb-item" + (view === 'lawsearch' && !openEval ? " active" : "")} onClick={() => { setView('lawsearch'); setOpenEval(null); }}>법령검색</div>
+              <div className={"gnb-item" + (view === 'templates' && !openEval ? " active" : "")} onClick={() => { setView('templates'); setOpenEval(null); }}>양식함</div>
+            </nav>
+          </div>
         </div>
-      </div>
+      </header>
 
       {showSettings && (
         <SettingsModal userEmail={userEmail} onClose={() => setShowSettings(false)} />
       )}
 
       <div className="app-body">
-        <aside className="sidebar">
-          <nav>
-            <div className={"sidebar-nav-item" + (view === 'home' && !openEval ? " active" : "")} onClick={() => { setView('home'); setOpenEval(null); }}>
-              <span>🏠</span> 홈
-            </div>
-            <div className={"sidebar-nav-item" + (view === 'announcements' && !openEval ? " active" : "")} onClick={() => { setOpenAnnouncementId(null); setView('announcements'); setOpenEval(null); }}>
-              <span>📢</span> 공지사항
-            </div>
-            <div className={"sidebar-nav-item" + (view === 'inprogress' && !openEval ? " active" : "")} onClick={() => { setView('inprogress'); setOpenEval(null); }}>
-              <span>📝</span> 평가진행
-            </div>
-            <div className={"sidebar-nav-item" + (view === 'results' && !openEval ? " active" : "")} onClick={() => { setView('results'); setOpenEval(null); }}>
-              <span>📊</span> 평가결과
-            </div>
-            <div className={"sidebar-nav-item" + (view === 'lawsearch' && !openEval ? " active" : "")} onClick={() => { setView('lawsearch'); setOpenEval(null); }}>
-              <span>⚖️</span> 법령검색
-            </div>
-            <div className={"sidebar-nav-item" + (view === 'templates' && !openEval ? " active" : "")} onClick={() => { setView('templates'); setOpenEval(null); }}>
-              <span>📁</span> 양식함
-            </div>
-          </nav>
-        </aside>
-
         <main className="main-content">
           <div className="content-inner">
             {error && <div className="disclaimer">{error}</div>}
@@ -466,18 +451,16 @@ export default function VendorPage() {
               </>
             ) : view === 'home' ? (
               <>
-                <div style={{
-                  background:'var(--ink)', color:'#fff', borderRadius:10, padding:'24px 28px', marginBottom:20,
-                }}>
-                  <div style={{fontSize:19, fontWeight:800}}>
+                <div className="home-hello">
+                  <div className="home-hello-name">
                     안녕하세요, {companyName && fullName ? `${companyName} ${fullName}` : (companyName || fullName || userEmail)}님
                   </div>
-                  <div style={{fontSize:13, color:'#c7cbd6', marginTop:4}}>
+                  <div className="home-hello-date">
                     {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
                   </div>
                 </div>
 
-                <div className="masthead">
+                <div className="masthead is-home">
                   <div>
                     <h1>홈</h1>
                     <div className="sub">공지사항과 진행중인 평가를 확인하세요</div>
@@ -601,6 +584,7 @@ export default function VendorPage() {
           </div>
         </main>
       </div>
+      <SiteFooter />
     </div>
   );
 }

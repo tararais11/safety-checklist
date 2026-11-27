@@ -13,6 +13,7 @@ import AnnouncementsPanel from './components/AnnouncementsPanel';
 import ClipIcon from './components/ClipIcon';
 import LawSearchPanel from './components/LawSearchPanel';
 import SettingsModal from './components/SettingsModal';
+import SiteFooter from './components/SiteFooter';
 
 const VIEW_TITLES = {
   home: '홈',
@@ -592,107 +593,79 @@ function DashboardInner() {
 
   return (
     <div className="app-shell">
-      <div className="topbar-global">
-        <div className="topbar-global-brand" style={{cursor:'pointer'}} onClick={() => navigate('home')}>
-          <img
-            src="/logo.gif"
-            alt="회사 로고"
-            style={{height:38, marginRight:4}}
-            onError={e => {
-              if (!e.currentTarget.dataset.retried) {
-                e.currentTarget.dataset.retried = '1';
-                e.currentTarget.src = '/logo.gif?retry=' + Date.now();
-              } else {
-                e.currentTarget.style.display = 'none';
-              }
-            }}
-          />
-          <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
+      <header className="site-header">
+        <div className="util-bar">
+          <div className="site-container util-in">
+            <span className="util-user">{displayName || userEmail}님</span>
+            <button className="util-link" onClick={() => { setShowSettings(true); setSettingsMsg(null); }} title="개인 설정">설정</button>
+            <button className="util-link" onClick={handleLogout}>로그아웃</button>
+          </div>
         </div>
-        <div className="topbar-global-right">
-          <span className="topbar-global-email">{displayName || userEmail}</span>
-          <button
-            className="topbar-global-logout"
-            style={{padding:'7px 12px', fontSize:15}}
-            onClick={() => { setShowSettings(true); setSettingsMsg(null); }}
-            title="개인 설정"
-          >
-            ⚙️
-          </button>
-          <button className="topbar-global-logout" onClick={handleLogout}>로그아웃</button>
+        <div className="gnb">
+          <div className="site-container gnb-in">
+            <div className="topbar-global-brand" style={{cursor:'pointer'}} onClick={() => navigate('home')}>
+              <img
+                src="/logo.gif"
+                alt="회사 로고"
+                className="brand-logo"
+                onError={e => {
+                  if (!e.currentTarget.dataset.retried) {
+                    e.currentTarget.dataset.retried = '1';
+                    e.currentTarget.src = '/logo.gif?retry=' + Date.now();
+                  } else {
+                    e.currentTarget.style.display = 'none';
+                  }
+                }}
+              />
+              <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
+            </div>
+            <nav className="gnb-menu">
+              <div className={"gnb-item" + (view === 'home' ? " active" : "")} onClick={() => navigate('home')}>
+                홈
+                {isAdmin && (
+                  <span
+                    className="gnb-caret"
+                    onClick={e => { e.stopPropagation(); setHomeExpanded(v => !v); }}
+                    title="공지사항 메뉴 펼치기"
+                  >
+                    {homeExpanded ? '▲' : '▼'}
+                  </span>
+                )}
+              </div>
+              {isAdmin && homeExpanded && (
+                <div className={"gnb-item gnb-sub" + (view === 'announcements' ? " active" : "")} onClick={() => goToAdminOnlyView('announcements')}>
+                  공지사항
+                </div>
+              )}
+              {isAdmin && (
+                <>
+                  <div className={"gnb-item" + (view === 'checklist' ? " active" : "")} onClick={() => goToAdminOnlyView('checklist')}>체크리스트</div>
+                  <div className={"gnb-item" + (view === 'yearly' ? " active" : "")} onClick={() => goToAdminOnlyView('yearly')}>연도별 기록</div>
+                </>
+              )}
+              <div className={"gnb-item" + (view === 'lawsearch' ? " active" : "")} onClick={() => navigate('lawsearch')}>법령검색</div>
+              <div className={"gnb-item" + (view === 'templates' ? " active" : "")} onClick={() => navigate('templates')}>양식함</div>
+              {isAdmin && (
+                <>
+                  <div className={"gnb-item" + (view === 'evalCreate' ? " active" : "")} onClick={() => goToAdminOnlyView('evalCreate')}>평가생성</div>
+                  <div className={"gnb-item" + (view === 'evalReview' ? " active" : "")} onClick={() => goToAdminOnlyView('evalReview')}>평가검토</div>
+                  <span className="gnb-divider" />
+                  <div className={"gnb-item" + (view === 'adminUsers' ? " active" : "")} onClick={() => goToAdminOnlyView('adminUsers')}>회원 관리</div>
+                </>
+              )}
+            </nav>
+          </div>
         </div>
-      </div>
+      </header>
 
       {showSettings && (
         <SettingsModal userEmail={userEmail} onClose={() => setShowSettings(false)} />
       )}
 
       <div className="app-body">
-      <aside className="sidebar">
-        <nav>
-          <div
-            className={"sidebar-nav-item" + (view === 'home' ? " active" : "")}
-            style={{justifyContent:'space-between'}}
-            onClick={() => navigate('home')}
-          >
-            <span><span style={{marginRight:10}}>🏠</span>홈</span>
-            {isAdmin && (
-              <span
-                onClick={e => { e.stopPropagation(); setHomeExpanded(v => !v); }}
-                style={{fontSize:11, opacity:0.8, padding:'2px 4px'}}
-              >
-                {homeExpanded ? '▲' : '▼'}
-              </span>
-            )}
-          </div>
-          {isAdmin && homeExpanded && (
-            <div
-              className={"sidebar-nav-item" + (view === 'announcements' ? " active" : "")}
-              style={{paddingLeft:34, fontSize:14}}
-              onClick={() => goToAdminOnlyView('announcements')}
-            >
-              <span>📢</span> 공지사항
-            </div>
-          )}
-          {isAdmin && (
-            <>
-              <div className={"sidebar-nav-item" + (view === 'checklist' ? " active" : "")} onClick={() => goToAdminOnlyView('checklist')}>
-                <span>📋</span> 체크리스트
-              </div>
-              <div className={"sidebar-nav-item" + (view === 'yearly' ? " active" : "")} onClick={() => goToAdminOnlyView('yearly')}>
-                <span>📅</span> 연도별 기록
-              </div>
-            </>
-          )}
-          <div className={"sidebar-nav-item" + (view === 'lawsearch' ? " active" : "")} onClick={() => navigate('lawsearch')}>
-            <span>⚖️</span> 법령검색
-          </div>
-          <div className={"sidebar-nav-item" + (view === 'templates' ? " active" : "")} onClick={() => navigate('templates')}>
-            <span>📁</span> 양식함
-          </div>
-          {isAdmin && (
-            <>
-              <div className={"sidebar-nav-item" + (view === 'evalCreate' ? " active" : "")} onClick={() => goToAdminOnlyView('evalCreate')}>
-                <span>🏗️</span> 평가생성
-              </div>
-              <div className={"sidebar-nav-item" + (view === 'evalReview' ? " active" : "")} onClick={() => goToAdminOnlyView('evalReview')}>
-                <span>📝</span> 평가검토
-              </div>
-            </>
-          )}
-        </nav>
-        {isAdmin && (
-          <div className="sidebar-footer-menu">
-            <div className={"sidebar-nav-item" + (view === 'adminUsers' ? " active" : "")} onClick={() => goToAdminOnlyView('adminUsers')}>
-              <span>🛡️</span> 회원 관리
-            </div>
-          </div>
-        )}
-      </aside>
-
       <main className="main-content">
         <div className="content-inner">
-      <div className="masthead">
+      <div className={"masthead" + (view === 'home' ? " is-home" : "")}>
         <div>
           <h1>{VIEW_TITLES[view] || '안전보건 통합관리시스템'}</h1>
         </div>
@@ -1029,6 +1002,7 @@ function DashboardInner() {
         </div>
       </main>
       </div>
+      <SiteFooter />
     </div>
   );
 }

@@ -14,6 +14,8 @@ import ClipIcon from './components/ClipIcon';
 import LawSearchPanel from './components/LawSearchPanel';
 import SettingsModal from './components/SettingsModal';
 import SiteFooter from './components/SiteFooter';
+import SiteHeader, { TodayBadge } from './components/SiteHeader';
+import PageHead from './components/PageHead';
 
 const VIEW_TITLES = {
   home: '홈',
@@ -37,6 +39,18 @@ const VIEW_ICONS = {
   adminUsers: '🛡️',
   evalCreate: '🏗️',
   evalReview: '📝',
+};
+
+// 화면 맨 위 제목 띠에 들어가는 한 줄 설명 (표시용)
+const VIEW_LEADS = {
+  announcements: '회사 공지와 안전보건 소식을 확인하세요.',
+  checklist: '일일부터 연간까지 주기별 점검 항목을 체크하고 증빙자료를 남깁니다.',
+  yearly: '연도별로 점검 완료 여부와 첨부한 증빙자료를 확인합니다.',
+  lawsearch: '산업안전보건법 등 관련 법령의 주요 조문을 확인하세요.',
+  templates: '자주 쓰는 안전보건 서식을 분류별로 올리고 내려받습니다.',
+  adminUsers: '가입 신청을 승인하고 사용자 권한을 관리합니다.',
+  evalCreate: '평가 양식을 만들고 협력업체에 평가를 배정합니다.',
+  evalReview: '협력업체가 제출한 평가와 증빙자료를 검토합니다.',
 };
 
 const PERIODS = [
@@ -591,72 +605,56 @@ function DashboardInner() {
   });
   const availableYears = Array.from(yearsFromData).sort((a, b) => b - a);
 
+  // ── 화면 모양: 머리글 메뉴 묶음. 각 메뉴는 원래 쓰던 이동 함수를 그대로 불러요 ──
+  const openAnnouncements = () => (isAdmin ? goToAdminOnlyView('announcements') : goTo('announcements'));
+  const menuGroups = [
+    {
+      key: 'home', label: '홈', active: view === 'home', onClick: () => navigate('home'),
+      items: [{ key: 'home', label: '메인 화면', active: view === 'home', onClick: () => navigate('home') }],
+    },
+    ...(isAdmin ? [{
+      key: 'check', label: '안전점검', active: view === 'checklist' || view === 'yearly', onClick: () => goToAdminOnlyView('checklist'),
+      items: [
+        { key: 'checklist', label: '체크리스트', active: view === 'checklist', onClick: () => goToAdminOnlyView('checklist') },
+        { key: 'yearly', label: '연도별 기록', active: view === 'yearly', onClick: () => goToAdminOnlyView('yearly') },
+      ],
+    }, {
+      key: 'eval', label: '협력업체 평가', active: view === 'evalCreate' || view === 'evalReview', onClick: () => goToAdminOnlyView('evalCreate'),
+      items: [
+        { key: 'evalCreate', label: '평가생성', active: view === 'evalCreate', onClick: () => goToAdminOnlyView('evalCreate') },
+        { key: 'evalReview', label: '평가검토', active: view === 'evalReview', onClick: () => goToAdminOnlyView('evalReview') },
+      ],
+    }] : []),
+    {
+      key: 'lib', label: '자료실', active: view === 'lawsearch' || view === 'templates', onClick: () => navigate('lawsearch'),
+      items: [
+        { key: 'lawsearch', label: '법령검색', active: view === 'lawsearch', onClick: () => navigate('lawsearch') },
+        { key: 'templates', label: '양식함', active: view === 'templates', onClick: () => navigate('templates') },
+      ],
+    },
+    {
+      key: 'notice', label: '공지사항', active: view === 'announcements', onClick: openAnnouncements,
+      items: [{ key: 'announcements', label: '공지사항', active: view === 'announcements', onClick: openAnnouncements }],
+    },
+    ...(isAdmin ? [{
+      key: 'admin', label: '관리', active: view === 'adminUsers', onClick: () => goToAdminOnlyView('adminUsers'),
+      items: [{ key: 'adminUsers', label: '회원 관리', active: view === 'adminUsers', onClick: () => goToAdminOnlyView('adminUsers') }],
+    }] : []),
+  ];
+  const currentGroup = menuGroups.find(g => g.items.some(it => it.active));
+
   return (
     <div className="app-shell">
-      <header className="site-header">
-        <div className="util-bar">
-          <div className="site-container util-in">
-            <span className="util-user">{displayName || userEmail}님</span>
-            <button className="util-link" onClick={() => { setShowSettings(true); setSettingsMsg(null); }} title="개인 설정">설정</button>
-            <button className="util-link" onClick={handleLogout}>로그아웃</button>
-          </div>
-        </div>
-        <div className="gnb">
-          <div className="site-container gnb-in">
-            <div className="topbar-global-brand" style={{cursor:'pointer'}} onClick={() => navigate('home')}>
-              <img
-                src="/logo.gif"
-                alt="회사 로고"
-                className="brand-logo"
-                onError={e => {
-                  if (!e.currentTarget.dataset.retried) {
-                    e.currentTarget.dataset.retried = '1';
-                    e.currentTarget.src = '/logo.gif?retry=' + Date.now();
-                  } else {
-                    e.currentTarget.style.display = 'none';
-                  }
-                }}
-              />
-              <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
-            </div>
-            <nav className="gnb-menu">
-              <div className={"gnb-item" + (view === 'home' ? " active" : "")} onClick={() => navigate('home')}>
-                홈
-                {isAdmin && (
-                  <span
-                    className="gnb-caret"
-                    onClick={e => { e.stopPropagation(); setHomeExpanded(v => !v); }}
-                    title="공지사항 메뉴 펼치기"
-                  >
-                    {homeExpanded ? '▲' : '▼'}
-                  </span>
-                )}
-              </div>
-              {isAdmin && homeExpanded && (
-                <div className={"gnb-item gnb-sub" + (view === 'announcements' ? " active" : "")} onClick={() => goToAdminOnlyView('announcements')}>
-                  공지사항
-                </div>
-              )}
-              {isAdmin && (
-                <>
-                  <div className={"gnb-item" + (view === 'checklist' ? " active" : "")} onClick={() => goToAdminOnlyView('checklist')}>체크리스트</div>
-                  <div className={"gnb-item" + (view === 'yearly' ? " active" : "")} onClick={() => goToAdminOnlyView('yearly')}>연도별 기록</div>
-                </>
-              )}
-              <div className={"gnb-item" + (view === 'lawsearch' ? " active" : "")} onClick={() => navigate('lawsearch')}>법령검색</div>
-              <div className={"gnb-item" + (view === 'templates' ? " active" : "")} onClick={() => navigate('templates')}>양식함</div>
-              {isAdmin && (
-                <>
-                  <div className={"gnb-item" + (view === 'evalCreate' ? " active" : "")} onClick={() => goToAdminOnlyView('evalCreate')}>평가생성</div>
-                  <div className={"gnb-item" + (view === 'evalReview' ? " active" : "")} onClick={() => goToAdminOnlyView('evalReview')}>평가검토</div>
-                  <span className="gnb-divider" />
-                  <div className={"gnb-item" + (view === 'adminUsers' ? " active" : "")} onClick={() => goToAdminOnlyView('adminUsers')}>회원 관리</div>
-                </>
-              )}
-            </nav>
-          </div>
-        </div>
-      </header>
+      <SiteHeader
+        util={[
+          { text: `${displayName || userEmail}님` },
+          { label: '설정', title: '개인 설정', onClick: () => { setShowSettings(true); setSettingsMsg(null); } },
+          { label: '로그아웃', onClick: handleLogout },
+        ]}
+        groups={menuGroups}
+        onBrandClick={() => navigate('home')}
+        right={<TodayBadge />}
+      />
 
       {showSettings && (
         <SettingsModal userEmail={userEmail} onClose={() => setShowSettings(false)} />
@@ -665,12 +663,14 @@ function DashboardInner() {
       <div className="app-body">
       <main className="main-content">
         <div className="content-inner">
-      <div className={"masthead" + (view === 'home' ? " is-home" : "")}>
-        <div>
-          <h1>{VIEW_TITLES[view] || '안전보건 통합관리시스템'}</h1>
-        </div>
-      </div>
-      <div className="stripe"></div>
+      {view !== 'home' && (
+        <PageHead
+          crumbs={[currentGroup?.label, VIEW_TITLES[view]].filter(Boolean)}
+          title={VIEW_TITLES[view] || '안전보건 통합관리시스템'}
+          lead={VIEW_LEADS[view]}
+          tabs={currentGroup ? currentGroup.items : []}
+        />
+      )}
 
       {error && <div className="disclaimer">{error}</div>}
 

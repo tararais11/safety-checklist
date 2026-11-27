@@ -11,6 +11,9 @@ import LawSearchPanel from '../components/LawSearchPanel';
 import TemplatesLibrary from '../components/TemplatesLibrary';
 import SettingsModal from '../components/SettingsModal';
 import SiteFooter from '../components/SiteFooter';
+import SiteHeader, { TodayBadge } from '../components/SiteHeader';
+import PageHead from '../components/PageHead';
+import PlanArt from '../components/PlanArt';
 
 const statusLabel = { pending: '작성중', submitted: '제출완료', reviewed: '검토완료' };
 
@@ -200,47 +203,53 @@ export default function VendorPage() {
   const resultEvals = evaluations.filter(e => e.status === 'reviewed');
   const listToShow = view === 'inprogress' ? inProgressEvals : resultEvals;
 
+  // ── 화면 모양: 머리글 메뉴 묶음. 각 메뉴는 원래 쓰던 화면 전환 코드를 그대로 써요 ──
+  const goHome = () => { setView('home'); setOpenEval(null); };
+  const goAnnouncements = () => { setOpenAnnouncementId(null); setView('announcements'); setOpenEval(null); };
+  const goInprogress = () => { setView('inprogress'); setOpenEval(null); };
+  const goResults = () => { setView('results'); setOpenEval(null); };
+  const goLaw = () => { setView('lawsearch'); setOpenEval(null); };
+  const goTemplates = () => { setView('templates'); setOpenEval(null); };
+  const evalTabs = [
+    { key: 'inprogress', label: '평가진행', active: view === 'inprogress' && !openEval, onClick: goInprogress },
+    { key: 'results', label: '평가결과', active: view === 'results' && !openEval, onClick: goResults },
+  ];
+  const libTabs = [
+    { key: 'lawsearch', label: '법령검색', active: view === 'lawsearch' && !openEval, onClick: goLaw },
+    { key: 'templates', label: '양식함', active: view === 'templates' && !openEval, onClick: goTemplates },
+  ];
+  const menuGroups = [
+    { key: 'home', label: '홈', active: view === 'home' && !openEval, onClick: goHome, items: [{ key: 'home', label: '메인 화면', active: view === 'home' && !openEval, onClick: goHome }] },
+    { key: 'notice', label: '공지사항', active: view === 'announcements' && !openEval, onClick: goAnnouncements, items: [{ key: 'announcements', label: '공지사항', active: view === 'announcements' && !openEval, onClick: goAnnouncements }] },
+    { key: 'eval', label: '평가', active: !!openEval || view === 'inprogress' || view === 'results', onClick: goInprogress, items: evalTabs },
+    { key: 'lib', label: '자료실', active: (view === 'lawsearch' || view === 'templates') && !openEval, onClick: goLaw, items: libTabs },
+  ];
+  const homeLinks = [
+    { key: 'a', dt: '회사 소식', dd: '공지사항', go: goAnnouncements },
+    { key: 'i', dt: '제출할 평가', dd: '평가진행', go: goInprogress },
+    { key: 'r', dt: '검토 완료', dd: '평가결과', go: goResults },
+    { key: 'l', dt: '법령 조문', dd: '법령검색', go: goLaw },
+    { key: 't', dt: '서식 내려받기', dd: '양식함', go: goTemplates },
+  ];
+  const homeCards = [
+    { key: 'i', title: '평가 작성 · 제출', desc: '배정된 평가 항목에 증빙자료와 의견을 올리고 관리자에게 제출합니다.', list: ['항목별 증빙자료 첨부', '의견 작성 · 임시 저장', '제출 후 진행 상태 확인'], go: '평가진행 바로가기', fn: goInprogress },
+    { key: 'r', title: '평가 결과', desc: '관리자 검토가 끝난 평가의 결과를 확인합니다.', list: ['검토 완료된 평가 목록', '항목별 점수 · 합계 확인', 'PDF로 저장(인쇄)'], go: '평가결과 보기', fn: goResults },
+    { key: 'l', title: '자료실', desc: '관련 법령의 주요 조문과 회사에서 올려둔 참고 양식을 확인합니다.', list: ['산업안전보건법 · 중대재해처벌법 조문', '참고 양식 내려받기'], go: '법령검색 바로가기', fn: goLaw },
+  ];
+  const click = (fn) => (e) => { e.preventDefault(); fn(); };
+
   return (
     <div className="app-shell">
-      <header className="site-header">
-        <div className="util-bar">
-          <div className="site-container util-in">
-            <span className="util-user">
-              {fullName && companyName ? `${fullName}-${companyName}` : (fullName || companyName || userEmail)}님
-            </span>
-            <button className="util-link" onClick={() => setShowSettings(true)} title="개인 설정">설정</button>
-            <button className="util-link" onClick={handleLogout}>로그아웃</button>
-          </div>
-        </div>
-        <div className="gnb">
-          <div className="site-container gnb-in">
-            <div className="topbar-global-brand" style={{cursor:'pointer'}} onClick={() => { setView('home'); setOpenEval(null); }}>
-              <img
-                src="/logo.gif"
-                alt="회사 로고"
-                className="brand-logo"
-                onError={e => {
-                  if (!e.currentTarget.dataset.retried) {
-                    e.currentTarget.dataset.retried = '1';
-                    e.currentTarget.src = '/logo.gif?retry=' + Date.now();
-                  } else {
-                    e.currentTarget.style.display = 'none';
-                  }
-                }}
-              />
-              <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
-            </div>
-            <nav className="gnb-menu">
-              <div className={"gnb-item" + (view === 'home' && !openEval ? " active" : "")} onClick={() => { setView('home'); setOpenEval(null); }}>홈</div>
-              <div className={"gnb-item" + (view === 'announcements' && !openEval ? " active" : "")} onClick={() => { setOpenAnnouncementId(null); setView('announcements'); setOpenEval(null); }}>공지사항</div>
-              <div className={"gnb-item" + (view === 'inprogress' && !openEval ? " active" : "")} onClick={() => { setView('inprogress'); setOpenEval(null); }}>평가진행</div>
-              <div className={"gnb-item" + (view === 'results' && !openEval ? " active" : "")} onClick={() => { setView('results'); setOpenEval(null); }}>평가결과</div>
-              <div className={"gnb-item" + (view === 'lawsearch' && !openEval ? " active" : "")} onClick={() => { setView('lawsearch'); setOpenEval(null); }}>법령검색</div>
-              <div className={"gnb-item" + (view === 'templates' && !openEval ? " active" : "")} onClick={() => { setView('templates'); setOpenEval(null); }}>양식함</div>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <SiteHeader
+        util={[
+          { text: `${fullName && companyName ? `${fullName}-${companyName}` : (fullName || companyName || userEmail)}님` },
+          { label: '설정', title: '개인 설정', onClick: () => setShowSettings(true) },
+          { label: '로그아웃', onClick: handleLogout },
+        ]}
+        groups={menuGroups}
+        onBrandClick={goHome}
+        right={<TodayBadge />}
+      />
 
       {showSettings && (
         <SettingsModal userEmail={userEmail} onClose={() => setShowSettings(false)} />
@@ -253,13 +262,11 @@ export default function VendorPage() {
 
             {openEval ? (
               <>
-                <div className="masthead">
-                  <div>
-                    <h1>{openEval.eval_templates?.title}</h1>
-                    <div className="sub">{openEval.eval_templates?.legal_basis}</div>
-                  </div>
-                </div>
-                <div className="stripe"></div>
+                <PageHead
+                  crumbs={['평가', openEval.status === 'reviewed' ? '평가결과' : '평가진행']}
+                  title={openEval.eval_templates?.title}
+                  lead={openEval.eval_templates?.legal_basis}
+                />
 
                 {openEval.eval_templates?.notes && <div className="disclaimer no-print">{openEval.eval_templates.notes}</div>}
 
@@ -451,23 +458,46 @@ export default function VendorPage() {
               </>
             ) : view === 'home' ? (
               <>
-                <div className="home-hello">
-                  <div className="home-hello-name">
-                    안녕하세요, {companyName && fullName ? `${companyName} ${fullName}` : (companyName || fullName || userEmail)}님
+                <section className="hero">
+                  <div className="hero-photo"><img src="/img/hero-site.jpg" alt="" /></div>
+                  <PlanArt className="plan-hero" />
+                  <div className="wrap">
+                    <div className="hero-inner">
+                      <p className="label">안전보건 통합관리시스템 · 협력업체</p>
+                      <h1>
+                        안녕하세요, {companyName && fullName ? `${companyName} ${fullName}` : (companyName || fullName || userEmail)}님<br />
+                        <em>함께 안전한 현장을 만들어요.</em>
+                      </h1>
+                      <p className="lead">
+                        {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}{' '}<br />
+                        공지사항과 진행 중인 평가를 확인하고, 평가 자료를 제출하세요.
+                      </p>
+                      <div className="hero-btns">
+                        <a href="#" className="btn btn-red" onClick={click(goInprogress)}>평가 작성하기</a>
+                        <a href="#" className="btn btn-ghost" onClick={click(goResults)}>평가결과 보기</a>
+                      </div>
+                    </div>
                   </div>
-                  <div className="home-hello-date">
-                    {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+                  <div className="facts">
+                    <div className="wrap">
+                      <div className="facts-list" style={{ '--n': homeLinks.length }}>
+                        {homeLinks.map(l => (
+                          <a key={l.key} href="#" className="f" onClick={click(l.go)}>
+                            <span className="dt">{l.dt}</span>
+                            <span className="dd">{l.dd}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </section>
 
-                <div className="masthead is-home">
-                  <div>
-                    <h1>홈</h1>
-                    <div className="sub">공지사항과 진행중인 평가를 확인하세요</div>
-                  </div>
-                </div>
-                <div className="stripe"></div>
-
+                <section className="section">
+                  <div className="wrap">
+                    <div className="sec-head">
+                      <p className="label">알림</p>
+                      <h2>지금 확인할 일</h2>
+                    </div>
                 <div className="home-grid">
                   <div className="panel">
                     <div className="panel-head">
@@ -506,51 +536,74 @@ export default function VendorPage() {
                     ))}
                   </div>
                 </div>
+                  </div>
+                </section>
+
+                <section className="section soft">
+                  <div className="wrap">
+                    <div className="sec-head">
+                      <p className="label">주요 업무</p>
+                      <h2>필요한 업무로 바로 이동하세요</h2>
+                      <p>카드를 누르면 해당 화면으로 이동합니다.</p>
+                    </div>
+                    <div className="cards">
+                      {homeCards.map(c => (
+                        <a key={c.key} href="#" className="card" onClick={click(c.fn)}>
+                          <div className="icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              {c.key === 'l'
+                                ? <><path d="M12 3v18" /><path d="M7 21h10" /><path d="M5 7h14" /><path d="M5 7L2 13a3 3 0 0 0 6 0L5 7z" /><path d="M19 7l-3 6a3 3 0 0 0 6 0l-3-6z" /></>
+                                : <><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1" /><path d="M9 12l2 2 4-4" /><path d="M9 17h6" /></>}
+                            </svg>
+                          </div>
+                          <h3>{c.title}</h3>
+                          <div>
+                            <p>{c.desc}</p>
+                            <ul style={{ marginTop: 14 }}>{c.list.map(t => <li key={t}>{t}</li>)}</ul>
+                          </div>
+                          <div className="go">{c.go} →</div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+
+                <section className="cta">
+                  <div className="wrap cta-row">
+                    <div>
+                      <p className="label">안전 수칙</p>
+                      <h2>위험하다고 느끼면 먼저 멈추고 알려주세요.</h2>
+                      <p className="cta-sub">현장 관리감독자에게 바로 알리면 함께 조치합니다.</p>
+                    </div>
+                    <div className="cta-btns">
+                      <a href="#" className="btn btn-white" onClick={click(goAnnouncements)}>공지사항 보기</a>
+                    </div>
+                  </div>
+                </section>
               </>
             ) : view === 'announcements' ? (
               <>
-                <div className="masthead">
-                  <div>
-                    <h1>공지사항</h1>
-                    <div className="sub">회사 공지사항을 확인하세요</div>
-                  </div>
-                </div>
-                <div className="stripe"></div>
+                <PageHead crumbs={['공지사항', '공지사항']} title="공지사항" lead="회사 공지사항을 확인하세요." />
                 <AnnouncementsPanel isAdmin={false} openAnnouncementId={openAnnouncementId} />
               </>
             ) : view === 'lawsearch' ? (
               <>
-                <div className="masthead">
-                  <div>
-                    <h1>법령검색</h1>
-                    <div className="sub">산업안전보건법 등 관련 법령 조문을 확인하세요</div>
-                  </div>
-                </div>
-                <div className="stripe"></div>
+                <PageHead crumbs={['자료실', '법령검색']} title="법령검색" lead="산업안전보건법 등 관련 법령 조문을 확인하세요." tabs={libTabs} />
                 <LawSearchPanel />
               </>
             ) : view === 'templates' ? (
               <>
-                <div className="masthead">
-                  <div>
-                    <h1>양식함</h1>
-                    <div className="sub">회사에서 올려둔 참고 양식을 다운로드하세요</div>
-                  </div>
-                </div>
-                <div className="stripe"></div>
+                <PageHead crumbs={['자료실', '양식함']} title="양식함" lead="회사에서 올려둔 참고 양식을 다운로드하세요." tabs={libTabs} />
                 <TemplatesLibrary note="⚠ 이 양식은 참고용 예시예요. 실제 제출 전에는 반드시 협력업체 상황에 맞게 내용을 수정해서 사용해주세요." />
               </>
             ) : (
               <>
-                <div className="masthead">
-                  <div>
-                    <h1>{view === 'inprogress' ? '평가진행' : '평가결과'}</h1>
-                    <div className="sub">
-                      {view === 'inprogress' ? '배정된 평가에 증빙자료를 제출하세요' : '검토가 완료된 평가 결과를 확인하세요'}
-                    </div>
-                  </div>
-                </div>
-                <div className="stripe"></div>
+                <PageHead
+                  crumbs={['평가', view === 'inprogress' ? '평가진행' : '평가결과']}
+                  title={view === 'inprogress' ? '평가진행' : '평가결과'}
+                  lead={view === 'inprogress' ? '배정된 평가에 증빙자료를 제출하세요.' : '검토가 완료된 평가 결과를 확인하세요.'}
+                  tabs={evalTabs}
+                />
 
                 <div className="panel">
                   <div className="panel-head">

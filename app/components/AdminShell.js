@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 import SiteFooter from './SiteFooter';
+import SiteHeader, { TodayBadge } from './SiteHeader';
 
 export default function AdminShell({ active, children }) {
   const router = useRouter();
@@ -16,38 +17,16 @@ export default function AdminShell({ active, children }) {
 
   return (
     <div className="app-shell">
-      <header className="site-header">
-        <div className="util-bar">
-          <div className="site-container util-in">
-            <button className="util-link" onClick={handleLogout}>로그아웃</button>
-          </div>
-        </div>
-        <div className="gnb">
-          <div className="site-container gnb-in">
-            <div className="topbar-global-brand">
-              <img
-                src="/logo.gif"
-                alt="회사 로고"
-                className="brand-logo"
-                onError={e => {
-                  if (!e.currentTarget.dataset.retried) {
-                    e.currentTarget.dataset.retried = '1';
-                    e.currentTarget.src = '/logo.gif?retry=' + Date.now();
-                  } else {
-                    e.currentTarget.style.display = 'none';
-                  }
-                }}
-              />
-              <span>안전보건</span>&nbsp;<span className="accent">통합관리시스템</span>
-            </div>
-            <nav className="gnb-menu">
-              <div className="gnb-item" onClick={() => router.push('/')}>메인 화면</div>
-              <div className={"gnb-item" + (active === 'users' ? " active" : "")} onClick={() => router.push('/admin')}>회원 관리</div>
-              <div className={"gnb-item" + (active === 'evaluations' ? " active" : "")} onClick={() => router.push('/admin/evaluations')}>협력업체 평가</div>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <SiteHeader
+        util={[{ label: '로그아웃', onClick: handleLogout }]}
+        groups={[
+          { key: 'main', label: '메인 화면', onClick: () => router.push('/'), items: [{ key: 'main', label: '메인 화면', onClick: () => router.push('/') }] },
+          { key: 'users', label: '회원 관리', active: active === 'users', onClick: () => router.push('/admin'), items: [{ key: 'users', label: '회원 관리', active: active === 'users', onClick: () => router.push('/admin') }] },
+          { key: 'evaluations', label: '협력업체 평가', active: active === 'evaluations', onClick: () => router.push('/admin/evaluations'), items: [{ key: 'evaluations', label: '협력업체 평가', active: active === 'evaluations', onClick: () => router.push('/admin/evaluations') }] },
+        ]}
+        onBrandClick={() => router.push('/')}
+        right={<TodayBadge />}
+      />
 
       <div className="app-body">
         <main className="main-content">

@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
 import AdminShell from '../components/AdminShell';
+import PageHead from '../components/PageHead';
 
 export default function AdminPage() {
   const supabase = createClient();
@@ -98,13 +99,7 @@ export default function AdminPage() {
 
   return (
     <AdminShell active="users">
-      <div className="masthead">
-        <div>
-          <h1>관리자 페이지</h1>
-          <div className="sub">회원가입 승인 및 사용자 관리</div>
-        </div>
-      </div>
-      <div className="stripe"></div>
+      <PageHead crumbs={['관리', '회원 관리']} title="관리자 페이지" lead="회원가입 승인 및 사용자 관리" />
 
       {error && <div className="disclaimer">{error}</div>}
 
